@@ -1,39 +1,153 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>KL Divergence Visualization</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM微调中的 KL散度：Forward vs Reverse</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
-        body { font-family: sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; }
-        .box { background: #f4f4f9; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        svg { background: white; border: 1px solid #ddd; display: block; margin: 20px auto; }
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--primary-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            color: var(--primary-color);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5rem;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .highlight {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        th {
+            background-color: #f1f4f8;
+            color: var(--secondary-color);
+        }
+        .formula-box {
+            background-color: #f1f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            overflow-x: auto;
+        }
     </style>
 </head>
 <body>
-    <h1>KL 散度：Mode-Covering vs Mode-Seeking</h1>
-    
-    <div class="box">
-        <h3>1. Forward KL (Mode-Covering)</h3>
-        <p>模型倾向于分布在“基础模型”覆盖的所有区域，导致生成内容倾向于多样化，但不够精确。</p>
-        <svg width="400" height="150">
-            <path d="M50 120 Q 150 20 250 120 T 350 120" fill="none" stroke="blue" stroke-width="3"/>
-            <text x="50" y="30" fill="blue">P_base (多峰)</text>
-            <rect x="50" y="100" width="300" height="20" fill="lightblue" opacity="0.3"/>
-            <text x="50" y="140" font-size="12">P_ft: 尝试覆盖所有峰值</text>
-        </svg>
+
+<div class="container">
+    <h1>Forward KL 与 Reverse KL 的区别</h1>
+    <p>在 LLM 微调（特别是 RLHF）中，我们通常设基础模型分布为 \( P \)（目标分布），微调后的模型分布为 \( Q \)（学习分布）。KL 散度用于衡量 \( Q \) 偏离 \( P \) 的程度。</p>
+
+    <div class="card">
+        <h2>1. Forward KL: 模式覆盖 (Mode-Covering)</h2>
+        <p><strong>定义：</strong> 评估的是 \( P \) 相对 \( Q \) 的散度。公式为：</p>
+        <div class="formula-box">
+            $$ D_{KL}(P || Q) = \sum_{x} P(x) \log \frac{P(x)}{Q(x)} = \mathbb{E}_{x \sim P}\left[\log \frac{P(x)}{Q(x)}\right] $$
+        </div>
+        <h3>核心机制：</h3>
+        <ul>
+            <li><strong>惩罚来源：</strong> 如果基础模型 \( P \) 生成某个样本的概率很高 (\( P(x) > 0 \))，但微调模型 \( Q \) 生成该样本的概率极低 (\( Q(x) \to 0 \))，此时 \(\frac{P(x)}{Q(x)} \to \infty\)，会产生<strong>极大的惩罚</strong>。</li>
+            <li><strong>行为表现 (Mode-Covering)：</strong> 为了避免巨大的惩罚，模型 \( Q \) 必须在 \( P \) 有概率的所有地方都分配概率质量。它会努力“铺开”以覆盖基础模型的所有模式（多样性高）。</li>
+            <li><strong>缺点：</strong> 它可能会在两个高概率模式之间的低概率区域也分配概率（即生成基础模型原本不会生成的低质量/幻觉内容）。</li>
+        </ul>
     </div>
 
-    <div class="box">
-        <h3>2. Reverse KL (Mode-Seeking)</h3>
-        <p>模型倾向于抓住“基础模型”中最显著的一点，生成内容高度确定，容易陷入局部最优。</p>
-        <svg width="400" height="150">
-            <path d="M50 120 Q 150 20 250 120 T 350 120" fill="none" stroke="blue" stroke-width="3"/>
-            <circle cx="150" cy="30" r="10" fill="red"/>
-            <text x="170" y="30" fill="red">P_ft: 锁定单一模式</text>
-        </svg>
+    <div class="card">
+        <h2>2. Reverse KL: 模式寻求 (Mode-Seeking)</h2>
+        <p><strong>定义：</strong> 评估的是 \( Q \) 相对 \( P \) 的散度。公式为：</p>
+        <div class="formula-box">
+            $$ D_{KL}(Q || P) = \sum_{x} Q(x) \log \frac{Q(x)}{P(x)} = \mathbb{E}_{x \sim Q}\left[\log \frac{Q(x)}{P(x)}\right] $$
+        </div>
+        <h3>核心机制：</h3>
+        <ul>
+            <li><strong>惩罚来源：</strong> 如果微调模型 \( Q \) 想要生成某个样本 (\( Q(x) > 0 \))，但基础模型 \( P \) 认为它极不可能 (\( P(x) \to 0 \))，惩罚就会变得极大。</li>
+            <li><strong>行为表现 (Mode-Seeking)：</strong> 为了安全，模型 \( Q \) 会极其保守，只在基础模型 \( P \) 概率最高（最确定）的一个或几个模式（Mode）上聚集概率。它会“忽略”掉 \( P \) 的其他模式。</li>
+            <li><strong>在 LLM 中的作用：</strong> 在标准 RLHF (如 PPO 算法) 中，通常作为惩罚项使用的是 Reverse KL (\( D_{KL}(\pi_{\theta} || \pi_{ref}) \))。它强制微调模型只输出基础模型认为“合理”的内容，有效防止 Reward Hacking（奖励作弊），但代价是<strong>降低了模型生成的多样性</strong>。</li>
+        </ul>
     </div>
 
-    <h3>为何会有这种区别？</h3>
-    <p>从数学定义看，Forward KL 中 $P_{base}$ 作为分母（加权项），当 $P_{base} \to 0$ 时，如果 $P_{ft} > 0$，惩罚项会趋于无穷大，因此 $P_{ft}$ 必须“避开”零区域；而在 Reverse KL 中，$P_{ft}$ 作为分子，它会主动寻找 $P_{base}$ 概率最大的区域，从而产生“聚集效应”。</p>
+    <div class="card">
+        <h2>3. 综合对比与总结</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>特征</th>
+                    <th>Forward KL \( D_{KL}(base || ft) \)</th>
+                    <th>Reverse KL \( D_{KL}(ft || base) \)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>别名</strong></td>
+                    <td>Mode-Covering (模式覆盖/求全)</td>
+                    <td>Mode-Seeking (模式寻求/求稳)</td>
+                </tr>
+                <tr>
+                    <td><strong>期望采样自</strong></td>
+                    <td>基础模型 (Base / Target)</td>
+                    <td>微调模型 (FT / Learned)</td>
+                </tr>
+                <tr>
+                    <td><strong>对零概率的惩罚</strong></td>
+                    <td>FT不能在Base有概率的地方为0</td>
+                    <td>FT不能在Base为0的地方有概率</td>
+                </tr>
+                <tr>
+                    <td><strong>生成多样性</strong></td>
+                    <td>高（试图保留 Base 的所有行为）</td>
+                    <td>低（容易坍缩到单一安全的高分回答）</td>
+                </tr>
+                <tr>
+                    <td><strong>生成质量</strong></td>
+                    <td>可能包含大量折中或幻觉内容</td>
+                    <td>输出通常很安全、确定性高，但容易重复</td>
+                </tr>
+                <tr>
+                    <td><strong>应用场景</strong></td>
+                    <td>监督微调 (SFT) 的交叉熵本质上等价于 Forward KL</td>
+                    <td>强化学习微调 (RLHF / PPO) 的惩罚项</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
 </body>
 </html>
