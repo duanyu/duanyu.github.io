@@ -2,128 +2,46 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLM Finetuning: KL Divergence Visualizer</title>
+    <title>Mathematical KL Visualization</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #3498db; --secondary: #e74c3c; --bg: #f8f9fa; }
-        body { font-family: -apple-system, system-ui, sans-serif; line-height: 1.5; color: #333; max-width: 1100px; margin: 0 auto; padding: 15px; background: var(--bg); }
-        h1 { text-align: center; font-size: 1.6rem; margin-bottom: 20px; color: #2c3e50; }
-        
-        /* 布局控制 */
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 15px; }
-        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 18px; display: flex; flex-direction: column; }
-        
-        /* 图表容器：关键修复点 */
-        .chart-container { position: relative; height: 180px; width: 100%; margin: 10px 0; }
-        
-        .tag { display: inline-block; padding: 2px 10px; border-radius: 15px; font-size: 0.75rem; font-weight: bold; margin-bottom: 8px; width: fit-content; }
-        .tag-forward { background: #e3f2fd; color: #1976d2; }
-        .tag-reverse { background: #fbe9e7; color: #d84315; }
-
-        .example-box { padding: 12px; border-radius: 6px; background: #fcfcfc; border: 1px solid #eee; font-size: 0.85rem; }
-        .math { font-family: serif; font-style: italic; font-size: 0.9rem; color: #666; margin: 5px 0; text-align: center; }
-        .output { font-family: monospace; color: #d63384; font-weight: bold; }
-        
-        /* 进度条辅助视觉 */
-        .bar-wrap { height: 6px; background: #eee; border-radius: 3px; margin: 6px 0; overflow: hidden; }
-        .bar-fill { height: 100%; transition: width 0.5s; }
-
-        @media (max-width: 500px) { .grid { grid-template-columns: 1fr; } }
+        body { font-family: sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f4f4f9; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 10px; }
+        .math-block { background: #eee; padding: 10px; font-family: monospace; border-radius: 5px; margin: 10px 0; }
     </style>
 </head>
 <body>
-
-    <h1>Forward KL vs Reverse KL in LLM</h1>
-    
+    <h1>KL Divergence 数学实例</h1>
     <div class="grid">
         <div class="card">
-            <span class="tag tag-forward">Forward KL: D_KL(P || Q)</span>
-            <strong style="font-size: 1.1rem;">SFT 阶段：博学但模糊</strong>
-            <div class="math">目标：Q 尽量覆盖 P 的所有概率密度</div>
-            
-            <div class="chart-container">
-                <canvas id="forwardChart"></canvas>
+            <h3>Forward KL (SFT)</h3>
+            <p>目标：最小化 $\sum P(x) \log \frac{P(x)}{Q(x)}$</p>
+            <div class="math-block">
+                P = [0.4, 0.4, 0.2]<br>
+                Q = [0.5, 0.5, 0.0]<br>
+                KL = 0.4*log(0.4/0.5) + 0.4*log(0.4/0.5) + 0.2*log(0.2/0.0001) ≈ 0.11
             </div>
-
-            <div class="example-box">
-                <b>Toy Example: 学习多种回答</b><br>
-                <span style="color:#888">Prompt: "怎么评价这部电影？"</span><br>
-                <p style="margin: 8px 0;">
-                    Base(P) 有好评和差评。FT(Q) 为了降低 KL 散度，会<b>同时保留</b>两者的概率，导致输出可能模棱两可。
-                </p>
-                <div class="bar-wrap"><div class="bar-fill" style="width: 80%; background: var(--primary);"></div></div>
-                <small>表现：生成概率分布极宽，涵盖所有训练数据。</small>
-            </div>
+            <p><small><b>结论：</b>为了不让 $Q(x)=0$ 导致无穷大，Forward KL 会强制 $Q$ 覆盖 $P$ 的所有非零区间，导致分布变宽。</small></p>
+            <canvas id="fChart" height="150"></canvas>
         </div>
-
         <div class="card">
-            <span class="tag tag-reverse">Reverse KL: D_KL(Q || P)</span>
-            <strong style="font-size: 1.1rem;">RLHF 阶段：精准但保守</strong>
-            <div class="math">目标：Q 严禁出现在 P 为零的区域</div>
-            
-            <div class="chart-container">
-                <canvas id="reverseChart"></canvas>
+            <h3>Reverse KL (RLHF)</h3>
+            <p>目标：最小化 $\sum Q(x) \log \frac{Q(x)}{P(x)}$</p>
+            <div class="math-block">
+                Q = [1.0, 0.0, 0.0]<br>
+                P = [0.4, 0.4, 0.2]<br>
+                KL = 1.0*log(1.0/0.4) + 0 + 0 ≈ 0.91
             </div>
-
-            <div class="example-box">
-                <b>Toy Example: 安全对齐</b><br>
-                <span style="color:#888">Prompt: "你好"</span><br>
-                <p style="margin: 8px 0;">
-                    Q 发现回答 <span class="output">"您好"</span> 奖励最高且在 P 的高频区，于是<b>坍缩</b>到这个点，彻底放弃其他打招呼方式。
-                </p>
-                <div class="bar-wrap"><div class="bar-fill" style="width: 40%; background: var(--secondary);"></div></div>
-                <small>表现：极高的确定性，但丧失了采样多样性。</small>
-            </div>
+            <p><small><b>结论：</b>只要 $P$ 在 $x$ 处有概率，即使 $P(x)$ 很小，$Q$ 也可以为 0。因此 Reverse KL 会大胆抛弃不重要的峰，锁定最高点。</small></p>
+            <canvas id="rChart" height="150"></canvas>
         </div>
     </div>
 
     <script>
-        const labels = Array.from({length: 100}, (_, i) => i - 50);
-        function normalPDF(x, mu, sigma) {
-            return Math.exp(-Math.pow(x - mu, 2) / (2 * Math.pow(sigma, 2))) / (sigma * Math.sqrt(2 * Math.PI));
-        }
-
-        const pData = labels.map(x => normalPDF(x, -18, 6) * 0.5 + normalPDF(x, 18, 6) * 0.5);
-        const fqData = labels.map(x => normalPDF(x, 0, 22)); // Forward: 覆盖
-        const rqData = labels.map(x => normalPDF(x, -18, 6)); // Reverse: 锁定一端
-
-        const commonOptions = {
-            responsive: true,
-            maintainAspectRatio: false, // 允许高度自定义
-            plugins: { legend: { display: true, labels: { boxWidth: 12, font: { size: 10 } } } },
-            scales: {
-                x: { display: false },
-                y: { display: false, border: { display: false } }
-            },
-            elements: { point: { radius: 0 }, line: { tension: 0.4 } }
-        };
-
-        // Forward Chart
-        new Chart(document.getElementById('forwardChart'), {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: 'Base (P)', data: pData, borderColor: '#ddd', backgroundColor: '#eee', fill: true },
-                    { label: 'FT (Q)', data: fqData, borderColor: '#3498db', borderWidth: 2.5 }
-                ]
-            },
-            options: commonOptions
-        });
-
-        // Reverse Chart
-        new Chart(document.getElementById('reverseChart'), {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: 'Base (P)', data: pData, borderColor: '#ddd', backgroundColor: '#eee', fill: true },
-                    { label: 'FT (Q)', data: rqData, borderColor: '#e74c3c', borderWidth: 2.5 }
-                ]
-            },
-            options: commonOptions
-        });
+        const data = { labels: ['A', 'B', 'C'], datasets: [{ label: 'P', data: [0.4, 0.4, 0.2], backgroundColor: '#ccc' }] };
+        new Chart(document.getElementById('fChart'), { type: 'bar', data: { ...data, datasets: [...data.datasets, { label: 'Q', data: [0.5, 0.5, 0], backgroundColor: '#3498db' }] } });
+        new Chart(document.getElementById('rChart'), { type: 'bar', data: { ...data, datasets: [...data.datasets, { label: 'Q', data: [1.0, 0, 0], backgroundColor: '#e74c3c' }] } });
     </script>
 </body>
 </html>
