@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>KL Divergence: Forward vs Reverse</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; background: #f4f7f6; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h1 { color: #2c3e50; text-align: center; }
+        .controls { display: flex; justify-content: space-around; margin-bottom: 20px; }
+        canvas { background: white; border-radius: 4px; }
+        .desc { font-size: 0.9em; color: #666; }
+    </style>
+</head>
+<body>
+
+    <h1>KL Divergence 在 LLM 中的直观对比</h1>
+
+    <div class="card">
+        <canvas id="klChart"></canvas>
+    </div>
+
+    <div class="controls">
+        <div class="card">
+            <h3>Forward KL (SFT)</h3>
+            <p class="desc">特征：<b>Mean-seeking</b>。Q 试图覆盖 P 的所有峰值。结果更具有通用性，但可能模糊。</p>
+        </div>
+        <div class="card">
+            <h3>Reverse KL (RLHF)</h3>
+            <p class="desc">特征：<b>Mode-seeking</b>。Q 锁定 P 的一个主峰。结果更精准，但可能丧失多样性。</p>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('klChart').getContext('2d');
+        
+        // 模拟双峰分布 P (Target)
+        const labels = Array.from({length: 100}, (_, i) => i);
+        const p_dist = labels.map(x => Math.exp(-0.5 * Math.pow((x-30)/8, 2)) + Math.exp(-0.5 * Math.pow((x-70)/8, 2)));
+
+        // 模拟 Forward KL 的 Q (覆盖所有)
+        const forward_q = labels.map(x => 0.8 * Math.exp(-0.5 * Math.pow((x-50)/20, 2)));
+
+        // 模拟 Reverse KL 的 Q (锁定一侧)
+        const reverse_q = labels.map(x => 1.2 * Math.exp(-0.5 * Math.pow((x-30)/8, 2)));
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'Target P (真实分布)', data: p_dist, borderColor: '#2c3e50', fill: true, backgroundColor: 'rgba(44, 62, 80, 0.1)', tension: 0.4 },
+                    { label: 'Forward KL (覆盖型)', data: forward_q, borderColor: '#3498db', borderDash: [5, 5], tension: 0.4 },
+                    { label: 'Reverse KL (精准型)', data: reverse_q, borderColor: '#e74c3c', borderDash: [2, 2], tension: 0.4 }
+                ]
+            },
+            options: { responsive: true, plugins: { title: { display: true, text: '分布拟合示意图' } } }
+        });
+    </script>
+</body>
+</html>
