@@ -11,6 +11,7 @@
             --primary-color: #2c3e50;
             --secondary-color: #34495e;
             --accent-color: #3498db;
+            --red-color: #e74c3c;
             --bg-color: #f8f9fa;
             --card-bg: #ffffff;
         }
@@ -42,10 +43,45 @@
             padding: 30px;
             margin-bottom: 30px;
         }
-        .highlight {
-            color: var(--accent-color);
-            font-weight: bold;
+        .formula-box {
+            background-color: #f1f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            overflow-x: auto;
+            margin: 20px 0;
         }
+        .visualization {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin: 30px 0;
+            gap: 20px;
+        }
+        .svg-container {
+            text-align: center;
+            background: #fdfdfd;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 20px;
+            width: 100%;
+            max-width: 350px;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .line-p { width: 20px; height: 3px; background: var(--accent-color); border-bottom: 2px dashed var(--accent-color); }
+        .line-q { width: 20px; height: 3px; background: var(--red-color); }
+        
         table {
             width: 100%;
             border-collapse: collapse;
@@ -60,46 +96,65 @@
             background-color: #f1f4f8;
             color: var(--secondary-color);
         }
-        .formula-box {
-            background-color: #f1f4f8;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            overflow-x: auto;
-        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>Forward KL 与 Reverse KL 的区别</h1>
-    <p>在 LLM 微调（特别是 RLHF）中，我们通常设基础模型分布为 \( P \)（目标分布），微调后的模型分布为 \( Q \)（学习分布）。KL 散度用于衡量 \( Q \) 偏离 \( P \) 的程度。</p>
+    <p>在 LLM 微调（特别是 RLHF）中，我们通常设基础模型分布为 \( P \)（目标分布，通常有多个合理的回答模式），微调后的模型分布为 \( Q \)（学习分布）。KL 散度用于衡量 \( Q \) 偏离 \( P \) 的程度。</p>
+
+    <div class="visualization">
+        <div class="svg-container">
+            <h3>Forward KL (Mode-Covering)</h3>
+            <svg viewBox="0 0 300 200" width="100%" height="200">
+                <path d="M 20 180 C 60 180, 60 50, 90 50 C 120 50, 120 180, 150 180 C 180 180, 180 50, 210 50 C 240 50, 240 180, 280 180" fill="none" stroke="#3498db" stroke-width="3" stroke-dasharray="5,5"/>
+                <path d="M 20 180 C 100 180, 100 90, 150 90 C 200 90, 200 180, 280 180" fill="none" stroke="#e74c3c" stroke-width="3"/>
+                <line x1="10" y1="180" x2="290" y2="180" stroke="#333" stroke-width="2"/>
+            </svg>
+            <div class="legend">
+                <div class="legend-item"><div class="line-p"></div> Base P(x)</div>
+                <div class="legend-item"><div class="line-q"></div> FT Q(x)</div>
+            </div>
+            <p style="font-size: 0.85rem; color: #666; margin-top: 15px;">Q 变宽以覆盖 P 的所有峰值，但在中间没有 P 的地方也分配了概率（产生幻觉）。</p>
+        </div>
+
+        <div class="svg-container">
+            <h3>Reverse KL (Mode-Seeking)</h3>
+            <svg viewBox="0 0 300 200" width="100%" height="200">
+                <path d="M 20 180 C 60 180, 60 50, 90 50 C 120 50, 120 180, 150 180 C 180 180, 180 50, 210 50 C 240 50, 240 180, 280 180" fill="none" stroke="#3498db" stroke-width="3" stroke-dasharray="5,5"/>
+                <path d="M 20 180 L 140 180 C 170 180, 180 50, 210 50 C 240 50, 250 180, 280 180" fill="none" stroke="#e74c3c" stroke-width="3"/>
+                <line x1="10" y1="180" x2="290" y2="180" stroke="#333" stroke-width="2"/>
+            </svg>
+            <div class="legend">
+                <div class="legend-item"><div class="line-p"></div> Base P(x)</div>
+                <div class="legend-item"><div class="line-q"></div> FT Q(x)</div>
+            </div>
+            <p style="font-size: 0.85rem; color: #666; margin-top: 15px;">Q 只在一个峰值上聚集，放弃了其他峰值，确保输出绝对安全且符合 P 的预期。</p>
+        </div>
+    </div>
 
     <div class="card">
         <h2>1. Forward KL: 模式覆盖 (Mode-Covering)</h2>
-        <p><strong>定义：</strong> 评估的是 \( P \) 相对 \( Q \) 的散度。公式为：</p>
         <div class="formula-box">
-            $$ D_{KL}(P || Q) = \sum_{x} P(x) \log \frac{P(x)}{Q(x)} = \mathbb{E}_{x \sim P}\left[\log \frac{P(x)}{Q(x)}\right] $$
+            $$ D_{KL}(P || Q) = \mathbb{E}_{x \sim P}\left[\log \frac{P(x)}{Q(x)}\right] $$
         </div>
-        <h3>核心机制：</h3>
         <ul>
-            <li><strong>惩罚来源：</strong> 如果基础模型 \( P \) 生成某个样本的概率很高 (\( P(x) > 0 \))，但微调模型 \( Q \) 生成该样本的概率极低 (\( Q(x) \to 0 \))，此时 \(\frac{P(x)}{Q(x)} \to \infty\)，会产生<strong>极大的惩罚</strong>。</li>
-            <li><strong>行为表现 (Mode-Covering)：</strong> 为了避免巨大的惩罚，模型 \( Q \) 必须在 \( P \) 有概率的所有地方都分配概率质量。它会努力“铺开”以覆盖基础模型的所有模式（多样性高）。</li>
-            <li><strong>缺点：</strong> 它可能会在两个高概率模式之间的低概率区域也分配概率（即生成基础模型原本不会生成的低质量/幻觉内容）。</li>
+            <li><strong>惩罚机制：</strong> 如果基础模型 \( P \) 生成某个样本的概率高 (\( P(x) > 0 \))，但微调模型 \( Q \) 生成概率极低 (\( Q(x) \to 0 \))，会产生极大惩罚。</li>
+            <li><strong>行为表现：</strong> 模型 \( Q \) 必须努力“铺开”（如左图红线），覆盖基础模型的所有可能模式以避免惩罚。</li>
+            <li><strong>代价：</strong> 容易在两个合理模式的“折中地带”（\( P \) 概率为 0 的区域）也分配概率，这就导致了 LLM 产生无意义的拼接或<strong>幻觉 (Hallucination)</strong>。</li>
         </ul>
     </div>
 
     <div class="card">
         <h2>2. Reverse KL: 模式寻求 (Mode-Seeking)</h2>
-        <p><strong>定义：</strong> 评估的是 \( Q \) 相对 \( P \) 的散度。公式为：</p>
         <div class="formula-box">
-            $$ D_{KL}(Q || P) = \sum_{x} Q(x) \log \frac{Q(x)}{P(x)} = \mathbb{E}_{x \sim Q}\left[\log \frac{Q(x)}{P(x)}\right] $$
+            $$ D_{KL}(Q || P) = \mathbb{E}_{x \sim Q}\left[\log \frac{Q(x)}{P(x)}\right] $$
         </div>
-        <h3>核心机制：</h3>
         <ul>
-            <li><strong>惩罚来源：</strong> 如果微调模型 \( Q \) 想要生成某个样本 (\( Q(x) > 0 \))，但基础模型 \( P \) 认为它极不可能 (\( P(x) \to 0 \))，惩罚就会变得极大。</li>
-            <li><strong>行为表现 (Mode-Seeking)：</strong> 为了安全，模型 \( Q \) 会极其保守，只在基础模型 \( P \) 概率最高（最确定）的一个或几个模式（Mode）上聚集概率。它会“忽略”掉 \( P \) 的其他模式。</li>
-            <li><strong>在 LLM 中的作用：</strong> 在标准 RLHF (如 PPO 算法) 中，通常作为惩罚项使用的是 Reverse KL (\( D_{KL}(\pi_{\theta} || \pi_{ref}) \))。它强制微调模型只输出基础模型认为“合理”的内容，有效防止 Reward Hacking（奖励作弊），但代价是<strong>降低了模型生成的多样性</strong>。</li>
+            <li><strong>惩罚机制：</strong> 如果微调模型 \( Q \) 想要生成某个样本 (\( Q(x) > 0 \))，但基础模型 \( P \) 认为它不可能 (\( P(x) \to 0 \))，惩罚就会变得极大。</li>
+            <li><strong>行为表现：</strong> 为了安全，模型 \( Q \) 会非常保守（如右图红线），只在基础模型概率最高的一个或几个模式上聚集。</li>
+            <li><strong>在 LLM 中的作用：</strong> PPO 等 RLHF 算法通常使用 Reverse KL 作为惩罚项。它强制微调模型只输出基础模型认为“最合理”的内容，有效防止奖励作弊，但代价是<strong>降低了回答的多样性</strong>（即模型总是倾向于用某种固定的安全句式回答）。</li>
         </ul>
     </div>
 
@@ -109,40 +164,30 @@
             <thead>
                 <tr>
                     <th>特征</th>
-                    <th>Forward KL \( D_{KL}(base || ft) \)</th>
-                    <th>Reverse KL \( D_{KL}(ft || base) \)</th>
+                    <th>Forward KL \( D_{KL}(P || Q) \)</th>
+                    <th>Reverse KL \( D_{KL}(Q || P) \)</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td><strong>别名</strong></td>
-                    <td>Mode-Covering (模式覆盖/求全)</td>
-                    <td>Mode-Seeking (模式寻求/求稳)</td>
+                    <td><strong>核心特质</strong></td>
+                    <td>Mode-Covering (求全)</td>
+                    <td>Mode-Seeking (求稳)</td>
                 </tr>
                 <tr>
-                    <td><strong>期望采样自</strong></td>
-                    <td>基础模型 (Base / Target)</td>
-                    <td>微调模型 (FT / Learned)</td>
-                </tr>
-                <tr>
-                    <td><strong>对零概率的惩罚</strong></td>
-                    <td>FT不能在Base有概率的地方为0</td>
-                    <td>FT不能在Base为0的地方有概率</td>
+                    <td><strong>不希望发生的事</strong></td>
+                    <td>Base 有的地方 FT 没有</td>
+                    <td>FT 有的地方 Base 没有</td>
                 </tr>
                 <tr>
                     <td><strong>生成多样性</strong></td>
-                    <td>高（试图保留 Base 的所有行为）</td>
-                    <td>低（容易坍缩到单一安全的高分回答）</td>
+                    <td>高（保留 Base 的所有行为）</td>
+                    <td>低（容易坍缩到单一的“好学生”回答）</td>
                 </tr>
                 <tr>
                     <td><strong>生成质量</strong></td>
-                    <td>可能包含大量折中或幻觉内容</td>
+                    <td>可能包含折中或幻觉内容</td>
                     <td>输出通常很安全、确定性高，但容易重复</td>
-                </tr>
-                <tr>
-                    <td><strong>应用场景</strong></td>
-                    <td>监督微调 (SFT) 的交叉熵本质上等价于 Forward KL</td>
-                    <td>强化学习微调 (RLHF / PPO) 的惩罚项</td>
                 </tr>
             </tbody>
         </table>
