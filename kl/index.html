@@ -3,39 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KL Divergence: Forward vs Reverse in LLMs</title>
+    <title>LLM Finetuning: Forward vs Reverse KL</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 900px; margin: 0 auto; padding: 20px; background: #f4f7f9; }
-        .card { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
-        h1, h2 { color: #2c3e50; }
+        body { font-family: -apple-system, sans-serif; line-height: 1.6; color: #333; max-width: 1000px; margin: 0 auto; padding: 20px; background: #f0f2f5; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 20px; }
+        h1 { text-align: center; color: #1a1a1a; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .label { font-weight: bold; display: block; margin-bottom: 5px; }
-        .description { font-size: 0.9em; color: #666; }
-        canvas { background: #fff; border: 1px solid #eee; }
-        code { background: #eee; padding: 2px 4px; border-radius: 4px; }
+        .tag { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; margin-bottom: 10px; }
+        .tag-forward { background: #e3f2fd; color: #1976d2; }
+        .tag-reverse { background: #fbe9e7; color: #d84315; }
+        
+        /* Toy Example Styling */
+        .example-box { margin-top: 15px; padding: 15px; border-left: 4px solid #ddd; background: #fafafa; font-size: 0.95em; }
+        .prompt { color: #888; font-weight: bold; }
+        .output { color: #2c3e50; font-family: monospace; background: #eee; padding: 2px 5px; }
+        .prob-bar { height: 8px; background: #ddd; border-radius: 4px; margin-top: 5px; position: relative; }
+        .prob-fill { height: 100%; border-radius: 4px; }
+
+        .math { font-family: "Times New Roman", serif; font-style: italic; background: #f9f9f9; padding: 10px; border-radius: 5px; display: block; margin: 10px 0; text-align: center; }
+        footer { text-align: center; margin-top: 40px; color: #888; font-size: 0.8em; }
     </style>
 </head>
 <body>
 
-    <h1>KL Divergence 在 LLM 微调中的直观区别</h1>
-    <p>在 LLM 对齐中，我们通常比较基座模型分布 $P$ 和微调模型分布 $Q$。</p>
+    <h1>KL 散度在 LLM 微调中的直观展示</h1>
+    
+    <div class="card">
+        <h3>基本概念</h3>
+        <p>假设 <b>Base Model (P)</b> 对某个问题的回答有两个同样高概率的选项（双峰分布）。<b>Finetuned Model (Q)</b> 如何去拟合它？</p>
+    </div>
 
     <div class="grid">
         <div class="card">
-            <h2>Forward KL (SFT 逻辑)</h2>
-            <p class="description">模型试图覆盖基座分布的所有可能性。这导致模型生成的回答较为全面，但有时会因为“平均化”而显得平庸或产生幻觉。</p>
+            <span class="tag tag-forward">Forward KL: D_KL(P || Q)</span>
+            <h2>博学但平庸 (Mean-Seeking)</h2>
+            <div class="math">SFT (监督微调) 的逻辑</div>
+            <p class="description">Q 会试图覆盖 P 中所有的非零区域。为了不漏掉任何一个正确答案，Q 选择了“既要又要”，结果分布变得非常宽。内容全面但不够犀利。</p>
+            
             <canvas id="forwardChart"></canvas>
-            <p><strong>特性：Mean-Seeking</strong><br>适合学习新知识，确保不遗漏数据集里的信息。</p>
+
+            <div class="example-box">
+                <strong>Toy Example: 词汇预测</strong><br>
+                <span class="prompt">Prompt: "长风破浪会有时，直挂云帆___"</span><br>
+                <div style="margin-top:10px">
+                    <span>Base (P): [济沧海: 0.5, 济深海: 0.4, ...]</span><br>
+                    <span><b>FT (Q) 输出:</b> <span class="output">"济沧海" (0.45), "济深海" (0.4)</span></span>
+                    <div class="prob-bar"><div class="prob-fill" style="width: 85%; background: #3498db;"></div></div>
+                    <small>结果：模型学会了数据集里所有的变体，但概率被平摊了。</small>
+                </div>
+            </div>
         </div>
 
         <div class="card">
-            <h2>Reverse KL (RLHF 逻辑)</h2>
-            <p class="description">模型选择基座分布中最稳妥（高概率）的一个峰值。这让模型回答非常干脆、符合人类偏好，但可能导致回答多样性下降。</p>
+            <span class="tag tag-reverse">Reverse KL: D_KL(Q || P)</span>
+            <h2>精准但保守 (Mode-Seeking)</h2>
+            <div class="math">RLHF (强化学习) 的逻辑</div>
+            <p class="description">Q 只在 P 概率最高的地方分配概率。如果 Q 尝试覆盖 P 没有的地方，惩罚会极大。结果 Q 锁定了一个“最稳”的答案，放弃了多样性。</p>
+            
             <canvas id="reverseChart"></canvas>
-            <p><strong>特性：Mode-Seeking</strong><br>适合对齐，让模型“只说正确的话”，避免踩坑。</p>
+
+            <div class="example-box">
+                <strong>Toy Example: 风格对齐</strong><br>
+                <span class="prompt">Prompt: "你好"</span><br>
+                <div style="margin-top:10px">
+                    <span>Base (P): [你好: 0.3, 您好: 0.3, 嘿: 0.1...]</span><br>
+                    <span><b>FT (Q) 输出:</b> <span class="output">"您好" (0.95)</span></span>
+                    <div class="prob-bar"><div class="prob-fill" style="width: 95%; background: #e74c3c;"></div></div>
+                    <small>结果：模型发现“您好”最安全且奖励高，于是极度收敛到这一个点。</small>
+                </div>
+            </div>
         </div>
     </div>
+
+    <div class="card">
+        <h3>总结对比</h3>
+        <table style="width:100%; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid #eee;">
+                <th align="left">特性</th><th align="left">Forward KL (SFT)</th><th align="left">Reverse KL (RLHF)</th>
+            </tr>
+            <tr>
+                <td><b>行为</b></td><td>Zero-avoiding (不能漏掉 P 的可能性)</td><td>Zero-forcing (严禁踩到 P 的低频区)</td>
+            </tr>
+            <tr>
+                <td><b>直观感受</b></td><td>覆盖所有模式，分布变宽</td><td>锁定单一模式，分布变窄（坍缩）</td>
+            </tr>
+            <tr>
+                <td><b>LLM 风险</b></td><td>容易产生“幻觉”，采样时容易出乱码</td><td>容易产生“回答复读”或多样性缺失</td>
+            </tr>
+        </table>
+    </div>
+
+    <footer>
+        可视化由 Chart.js 驱动 | 适用于 GitHub Pages 部署
+    </footer>
 
     <script>
         function normalPDF(x, mu, sigma) {
@@ -43,32 +104,41 @@
         }
 
         const labels = Array.from({length: 100}, (_, i) => i - 50);
-        
-        // 基座分布 P (双峰)
-        const dataP = labels.map(x => normalPDF(x, -20, 8) * 0.5 + normalPDF(x, 20, 8) * 0.5);
+        const dataP = labels.map(x => normalPDF(x, -20, 7) * 0.5 + normalPDF(x, 20, 7) * 0.5);
+        const dataForwardQ = labels.map(x => normalPDF(x, 0, 25)); // 覆盖型
+        const dataReverseQ = labels.map(x => normalPDF(x, -20, 7)); // 锁定型
 
-        // Forward KL 模拟: Q 试图覆盖两个峰
-        const dataForwardQ = labels.map(x => normalPDF(x, 0, 22));
-
-        // Reverse KL 模拟: Q 锁定其中一个峰
-        const dataReverseQ = labels.map(x => normalPDF(x, -20, 8));
-
-        const config = (ctx, qData, qLabel, qColor) => {
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Base Model (P)', data: dataP, borderColor: '#bdc3c7', fill: true, backgroundColor: 'rgba(189, 195, 199, 0.2)', tension: 0.4 },
-                        { label: qLabel, data: qData, borderColor: qColor, borderWidth: 3, fill: false, tension: 0.4 }
-                    ]
-                },
-                options: { plugins: { legend: { display: true } }, scales: { y: { display: false }, x: { display: false } } }
-            });
+        const opt = { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } },
+            scales: { y: { display: false }, x: { display: false } },
+            elements: { point: { radius: 0 } }
         };
 
-        config(document.getElementById('forwardChart'), dataForwardQ, 'FT Model (Q) - Forward', '#3498db');
-        config(document.getElementById('reverseChart'), dataReverseQ, 'FT Model (Q) - Reverse', '#e74c3c');
+        new Chart(document.getElementById('forwardChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'Base (P)', data: dataP, borderColor: '#ccc', fill: true, backgroundColor: 'rgba(200,200,200,0.1)', tension: 0.4 },
+                    { label: 'FT (Q)', data: dataForwardQ, borderColor: '#3498db', borderWidth: 3, tension: 0.4 }
+                ]
+            },
+            options: opt
+        });
+
+        new Chart(document.getElementById('reverseChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'Base (P)', data: dataP, borderColor: '#ccc', fill: true, backgroundColor: 'rgba(200,200,200,0.1)', tension: 0.4 },
+                    { label: 'FT (Q)', data: dataReverseQ, borderColor: '#e74c3c', borderWidth: 3, tension: 0.4 }
+                ]
+            },
+            options: opt
+        });
     </script>
 </body>
 </html>
