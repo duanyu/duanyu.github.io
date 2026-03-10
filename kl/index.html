@@ -1,47 +1,128 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Mathematical KL Visualization</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { font-family: sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f4f4f9; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .card { background: white; padding: 20px; border-radius: 10px; }
-        .math-block { background: #eee; padding: 10px; font-family: monospace; border-radius: 5px; margin: 10px 0; }
-    </style>
+<meta charset="UTF-8">
+<title>Interactive Forward KL vs Reverse KL</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+  canvas { max-width: 600px; margin-bottom: 40px; }
+  h2 { color: #333; }
+  .slider-container { margin-bottom: 20px; }
+  .slider-container label { margin-right: 10px; }
+</style>
 </head>
 <body>
-    <h1>KL Divergence 数学实例</h1>
-    <div class="grid">
-        <div class="card">
-            <h3>Forward KL (SFT)</h3>
-            <p>目标：最小化 $\sum P(x) \log \frac{P(x)}{Q(x)}$</p>
-            <div class="math-block">
-                P = [0.4, 0.4, 0.2]<br>
-                Q = [0.5, 0.5, 0.0]<br>
-                KL = 0.4*log(0.4/0.5) + 0.4*log(0.4/0.5) + 0.2*log(0.2/0.0001) ≈ 0.11
-            </div>
-            <p><small><b>结论：</b>为了不让 $Q(x)=0$ 导致无穷大，Forward KL 会强制 $Q$ 覆盖 $P$ 的所有非零区间，导致分布变宽。</small></p>
-            <canvas id="fChart" height="150"></canvas>
-        </div>
-        <div class="card">
-            <h3>Reverse KL (RLHF)</h3>
-            <p>目标：最小化 $\sum Q(x) \log \frac{Q(x)}{P(x)}$</p>
-            <div class="math-block">
-                Q = [1.0, 0.0, 0.0]<br>
-                P = [0.4, 0.4, 0.2]<br>
-                KL = 1.0*log(1.0/0.4) + 0 + 0 ≈ 0.91
-            </div>
-            <p><small><b>结论：</b>只要 $P$ 在 $x$ 处有概率，即使 $P(x)$ 很小，$Q$ 也可以为 0。因此 Reverse KL 会大胆抛弃不重要的峰，锁定最高点。</small></p>
-            <canvas id="rChart" height="150"></canvas>
-        </div>
-    </div>
 
-    <script>
-        const data = { labels: ['A', 'B', 'C'], datasets: [{ label: 'P', data: [0.4, 0.4, 0.2], backgroundColor: '#ccc' }] };
-        new Chart(document.getElementById('fChart'), { type: 'bar', data: { ...data, datasets: [...data.datasets, { label: 'Q', data: [0.5, 0.5, 0], backgroundColor: '#3498db' }] } });
-        new Chart(document.getElementById('rChart'), { type: 'bar', data: { ...data, datasets: [...data.datasets, { label: 'Q', data: [1.0, 0, 0], backgroundColor: '#e74c3c' }] } });
-    </script>
+<h1>Interactive Forward KL vs Reverse KL in LLM Fine-tuning</h1>
+
+<p>Adjust the probabilities of Base and Fine-tuned (FT) distributions for tokens A, B, C.</p>
+
+<div class="slider-container">
+  <h3>Base Distribution</h3>
+  <label>A: <span id="baseA_val">0.4</span></label>
+  <input type="range" min="0" max="1" step="0.01" value="0.4" id="baseA">
+  <label>B: <span id="baseB_val">0.4</span></label>
+  <input type="range" min="0" max="1" step="0.01" value="0.4" id="baseB">
+  <label>C: <span id="baseC_val">0.2</span></label>
+  <input type="range" min="0" max="1" step="0.01" value="0.2" id="baseC">
+</div>
+
+<div class="slider-container">
+  <h3>FT Distribution</h3>
+  <label>A: <span id="ftA_val">0.1</span></label>
+  <input type="range" min="0" max="1" step="0.01" value="0.1" id="ftA">
+  <label>B: <span id="ftB_val">0.1</span></label>
+  <input type="range" min="0" max="1" step="0.01" value="0.1" id="ftB">
+  <label>C: <span id="ftC_val">0.8</span></label>
+  <input type="range" min="0" max="1" step="0.01" value="0.8" id="ftC">
+</div>
+
+<h2>Forward KL (mode-covering)</h2>
+<canvas id="forwardKL"></canvas>
+
+<h2>Reverse KL (mode-seeking)</h2>
+<canvas id="reverseKL"></canvas>
+
+<script>
+// 初始分布
+let labels = ['A', 'B', 'C'];
+let base = [0.4, 0.4, 0.2];
+let ft = [0.1, 0.1, 0.8];
+
+// 简单模拟 forward KL / reverse KL 更新
+function forwardKLUpdate(base, ft) {
+  // forward KL 保留 base 的多样性，但向 ft 靠近
+  return base.map((b,i) => b*0.7 + ft[i]*0.3);
+}
+
+function reverseKLUpdate(base, ft) {
+  // reverse KL 迅速集中到 ft
+  return base.map((b,i) => b*0.2 + ft[i]*0.8);
+}
+
+// 创建图表
+let forwardKLChart = new Chart(document.getElementById('forwardKL'), {
+    type: 'bar',
+    data: {
+        labels,
+        datasets: [
+            { label: 'Base', data: base, backgroundColor: 'rgba(54,162,235,0.6)' },
+            { label: 'Forward KL', data: forwardKLUpdate(base, ft), backgroundColor: 'rgba(75,192,192,0.6)' }
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true, max: 1 } }
+    }
+});
+
+let reverseKLChart = new Chart(document.getElementById('reverseKL'), {
+    type: 'bar',
+    data: {
+        labels,
+        datasets: [
+            { label: 'Base', data: base, backgroundColor: 'rgba(54,162,235,0.6)' },
+            { label: 'Reverse KL', data: reverseKLUpdate(base, ft), backgroundColor: 'rgba(255,99,132,0.6)' }
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true, max: 1 } }
+    }
+});
+
+// 绑定滑块
+const sliders = ['baseA','baseB','baseC','ftA','ftB','ftC'];
+sliders.forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    // 更新 base / ft 数组
+    base = [
+      parseFloat(document.getElementById('baseA').value),
+      parseFloat(document.getElementById('baseB').value),
+      parseFloat(document.getElementById('baseC').value)
+    ];
+    ft = [
+      parseFloat(document.getElementById('ftA').value),
+      parseFloat(document.getElementById('ftB').value),
+      parseFloat(document.getElementById('ftC').value)
+    ];
+    // 更新显示
+    ['A','B','C'].forEach((token,i) => {
+      document.getElementById('base'+token+'_val').innerText = base[i].toFixed(2);
+      document.getElementById('ft'+token+'_val').innerText = ft[i].toFixed(2);
+    });
+    // 更新图表
+    forwardKLChart.data.datasets[0].data = base;
+    forwardKLChart.data.datasets[1].data = forwardKLUpdate(base, ft);
+    forwardKLChart.update();
+
+    reverseKLChart.data.datasets[0].data = base;
+    reverseKLChart.data.datasets[1].data = reverseKLUpdate(base, ft);
+    reverseKLChart.update();
+  });
+});
+</script>
+
 </body>
 </html>
