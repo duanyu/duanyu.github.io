@@ -3,196 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLM微调中的 KL散度：Forward vs Reverse</title>
+    <title>KL Divergence in LLM Finetuning</title>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
-        :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #34495e;
-            --accent-color: #3498db;
-            --red-color: #e74c3c;
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            line-height: 1.6;
-            color: var(--primary-color);
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 20px;
-        }
-        h1, h2, h3 {
-            color: var(--primary-color);
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 40px;
-            font-size: 2.5rem;
-        }
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            margin-bottom: 30px;
-        }
-        .formula-box {
-            background-color: #f1f4f8;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            overflow-x: auto;
-            margin: 20px 0;
-        }
-        .visualization {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            margin: 30px 0;
-            gap: 20px;
-        }
-        .svg-container {
-            text-align: center;
-            background: #fdfdfd;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            padding: 20px;
-            width: 100%;
-            max-width: 350px;
-        }
-        .legend {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 10px;
-            font-size: 0.9rem;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .line-p { width: 20px; height: 3px; background: var(--accent-color); border-bottom: 2px dashed var(--accent-color); }
-        .line-q { width: 20px; height: 3px; background: var(--red-color); }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        th {
-            background-color: #f1f4f8;
-            color: var(--secondary-color);
-        }
+        :root { --primary-color: #2c3e50; --accent-color: #3498db; --red-color: #e74c3c; --bg-color: #f8f9fa; }
+        body { font-family: sans-serif; line-height: 1.6; color: var(--primary-color); background-color: var(--bg-color); margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .lang-switch { text-align: right; margin-bottom: 20px; }
+        button { cursor: pointer; padding: 5px 15px; border: 1px solid var(--primary-color); background: white; border-radius: 4px; }
+        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .visualization { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px; margin: 30px 0; }
+        .svg-container { background: #fdfdfd; border: 1px solid #eee; padding: 20px; border-radius: 8px; width: 350px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Forward KL 与 Reverse KL 的区别</h1>
-    <p>在 LLM 微调（特别是 RLHF）中，我们通常设基础模型分布为 \( P \)（目标分布，通常有多个合理的回答模式），微调后的模型分布为 \( Q \)（学习分布）。KL 散度用于衡量 \( Q \) 偏离 \( P \) 的程度。</p>
+    <div class="lang-switch">
+        <button onclick="setLang('zh')">中文</button>
+        <button onclick="setLang('en')">English</button>
+    </div>
+
+    <h1 id="title">Forward KL 与 Reverse KL 的区别</h1>
+    <p id="intro">在 LLM 微调中，KL 散度用于衡量微调模型与基础模型的分布差异。</p>
 
     <div class="visualization">
         <div class="svg-container">
-            <h3>Forward KL (Mode-Covering)</h3>
+            <h3 id="fwd-title">Forward KL (Mode-Covering)</h3>
             <svg viewBox="0 0 300 200" width="100%" height="200">
                 <path d="M 20 180 C 60 180, 60 50, 90 50 C 120 50, 120 180, 150 180 C 180 180, 180 50, 210 50 C 240 50, 240 180, 280 180" fill="none" stroke="#3498db" stroke-width="3" stroke-dasharray="5,5"/>
                 <path d="M 20 180 C 100 180, 100 90, 150 90 C 200 90, 200 180, 280 180" fill="none" stroke="#e74c3c" stroke-width="3"/>
                 <line x1="10" y1="180" x2="290" y2="180" stroke="#333" stroke-width="2"/>
             </svg>
-            <div class="legend">
-                <div class="legend-item"><div class="line-p"></div> Base P(x)</div>
-                <div class="legend-item"><div class="line-q"></div> FT Q(x)</div>
-            </div>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 15px;">Q 变宽以覆盖 P 的所有峰值，但在中间没有 P 的地方也分配了概率（产生幻觉）。</p>
+            <p id="fwd-desc" style="font-size: 0.8rem;">试图覆盖基础模型的所有模式。</p>
         </div>
-
         <div class="svg-container">
-            <h3>Reverse KL (Mode-Seeking)</h3>
+            <h3 id="rev-title">Reverse KL (Mode-Seeking)</h3>
             <svg viewBox="0 0 300 200" width="100%" height="200">
                 <path d="M 20 180 C 60 180, 60 50, 90 50 C 120 50, 120 180, 150 180 C 180 180, 180 50, 210 50 C 240 50, 240 180, 280 180" fill="none" stroke="#3498db" stroke-width="3" stroke-dasharray="5,5"/>
                 <path d="M 20 180 L 140 180 C 170 180, 180 50, 210 50 C 240 50, 250 180, 280 180" fill="none" stroke="#e74c3c" stroke-width="3"/>
                 <line x1="10" y1="180" x2="290" y2="180" stroke="#333" stroke-width="2"/>
             </svg>
-            <div class="legend">
-                <div class="legend-item"><div class="line-p"></div> Base P(x)</div>
-                <div class="legend-item"><div class="line-q"></div> FT Q(x)</div>
-            </div>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 15px;">Q 只在一个峰值上聚集，放弃了其他峰值，确保输出绝对安全且符合 P 的预期。</p>
+            <p id="rev-desc" style="font-size: 0.8rem;">聚焦于基础模型的一个最佳模式。</p>
         </div>
-    </div>
-
-    <div class="card">
-        <h2>1. Forward KL: 模式覆盖 (Mode-Covering)</h2>
-        <div class="formula-box">
-            $$ D_{KL}(P || Q) = \mathbb{E}_{x \sim P}\left[\log \frac{P(x)}{Q(x)}\right] $$
-        </div>
-        <ul>
-            <li><strong>惩罚机制：</strong> 如果基础模型 \( P \) 生成某个样本的概率高 (\( P(x) > 0 \))，但微调模型 \( Q \) 生成概率极低 (\( Q(x) \to 0 \))，会产生极大惩罚。</li>
-            <li><strong>行为表现：</strong> 模型 \( Q \) 必须努力“铺开”（如左图红线），覆盖基础模型的所有可能模式以避免惩罚。</li>
-            <li><strong>代价：</strong> 容易在两个合理模式的“折中地带”（\( P \) 概率为 0 的区域）也分配概率，这就导致了 LLM 产生无意义的拼接或<strong>幻觉 (Hallucination)</strong>。</li>
-        </ul>
-    </div>
-
-    <div class="card">
-        <h2>2. Reverse KL: 模式寻求 (Mode-Seeking)</h2>
-        <div class="formula-box">
-            $$ D_{KL}(Q || P) = \mathbb{E}_{x \sim Q}\left[\log \frac{Q(x)}{P(x)}\right] $$
-        </div>
-        <ul>
-            <li><strong>惩罚机制：</strong> 如果微调模型 \( Q \) 想要生成某个样本 (\( Q(x) > 0 \))，但基础模型 \( P \) 认为它不可能 (\( P(x) \to 0 \))，惩罚就会变得极大。</li>
-            <li><strong>行为表现：</strong> 为了安全，模型 \( Q \) 会非常保守（如右图红线），只在基础模型概率最高的一个或几个模式上聚集。</li>
-            <li><strong>在 LLM 中的作用：</strong> PPO 等 RLHF 算法通常使用 Reverse KL 作为惩罚项。它强制微调模型只输出基础模型认为“最合理”的内容，有效防止奖励作弊，但代价是<strong>降低了回答的多样性</strong>（即模型总是倾向于用某种固定的安全句式回答）。</li>
-        </ul>
-    </div>
-
-    <div class="card">
-        <h2>3. 综合对比与总结</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>特征</th>
-                    <th>Forward KL \( D_{KL}(P || Q) \)</th>
-                    <th>Reverse KL \( D_{KL}(Q || P) \)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>核心特质</strong></td>
-                    <td>Mode-Covering (求全)</td>
-                    <td>Mode-Seeking (求稳)</td>
-                </tr>
-                <tr>
-                    <td><strong>不希望发生的事</strong></td>
-                    <td>Base 有的地方 FT 没有</td>
-                    <td>FT 有的地方 Base 没有</td>
-                </tr>
-                <tr>
-                    <td><strong>生成多样性</strong></td>
-                    <td>高（保留 Base 的所有行为）</td>
-                    <td>低（容易坍缩到单一的“好学生”回答）</td>
-                </tr>
-                <tr>
-                    <td><strong>生成质量</strong></td>
-                    <td>可能包含折中或幻觉内容</td>
-                    <td>输出通常很安全、确定性高，但容易重复</td>
-                </tr>
-            </tbody>
-        </table>
     </div>
 </div>
 
+<script>
+    const dict = {
+        zh: { title: "Forward KL 与 Reverse KL 的区别", intro: "在 LLM 微调中，KL 散度用于衡量微调模型与基础模型的分布差异。", fwd_t: "Forward KL (模式覆盖)", fwd_d: "试图覆盖基础模型的所有模式。", rev_t: "Reverse KL (模式寻求)", rev_d: "聚焦于基础模型的一个最佳模式。" },
+        en: { title: "Forward KL vs Reverse KL", intro: "In LLM finetuning, KL divergence measures the distribution shift between the tuned and base models.", fwd_t: "Forward KL (Mode-Covering)", fwd_d: "Tries to cover all modes of the base model.", rev_t: "Reverse KL (Mode-Seeking)", rev_d: "Focuses on one optimal mode of the base model." }
+    };
+    function setLang(lang) {
+        document.getElementById('title').innerText = dict[lang].title;
+        document.getElementById('intro').innerText = dict[lang].intro;
+        document.getElementById('fwd-title').innerText = dict[lang].fwd_t;
+        document.getElementById('fwd-desc').innerText = dict[lang].fwd_d;
+        document.getElementById('rev-title').innerText = dict[lang].rev_t;
+        document.getElementById('rev-desc').innerText = dict[lang].rev_d;
+    }
+</script>
 </body>
 </html>
