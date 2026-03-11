@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>给老婆的软件开发入门指南 💕</title>
+<style>
+  /* ========== Reset & Base ========== */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; scroll-padding-top: 70px; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    line-height: 1.8; color: #2d3748; background: #f7f8fc;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ========== Navigation ========== */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  }
+  .nav-inner {
+    max-width: 1100px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; height: 60px;
+  }
+  .nav-logo { font-size: 18px; font-weight: 700; color: #6c63ff; }
+  .nav-links { display: flex; gap: 4px; flex-wrap: wrap; }
+  .nav-links a {
+    font-size: 13px; color: #64748b; text-decoration: none;
+    padding: 6px 12px; border-radius: 8px; transition: all .2s;
+    white-space: nowrap;
+  }
+  .nav-links a:hover, .nav-links a.active {
+    color: #6c63ff; background: #ede9fe;
+  }
+  .menu-btn {
+    display: none; background: none; border: none; font-size: 24px;
+    cursor: pointer; color: #64748b;
+  }
+
+  @media (max-width: 768px) {
+    .menu-btn { display: block; }
+    .nav-links {
+      display: none; position: absolute; top: 60px; left: 0; right: 0;
+      background: #fff; flex-direction: column; padding: 12px;
+      border-bottom: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,.08);
+    }
+    .nav-links.show { display: flex; }
+  }
+
+  /* ========== Hero ========== */
+  .hero {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    text-align: center; padding: 100px 24px 60px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 700px; }
+  .hero h1 {
+    font-size: clamp(32px, 6vw, 56px); font-weight: 800; color: #fff;
+    margin-bottom: 16px; letter-spacing: -0.5px;
+  }
+  .hero h1 .emoji { display: inline-block; animation: wave 2s ease-in-out infinite; }
+  @keyframes wave {
+    0%,100% { transform: rotate(0); }
+    25% { transform: rotate(20deg); }
+    75% { transform: rotate(-10deg); }
+  }
+  .hero p { font-size: 18px; color: rgba(255,255,255,0.85); max-width: 520px; margin: 0 auto 32px; }
+  .hero-btn {
+    display: inline-block; padding: 14px 36px; background: #fff;
+    color: #6c63ff; font-size: 16px; font-weight: 600;
+    border-radius: 50px; text-decoration: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    transition: all .3s;
+  }
+  .hero-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+
+  /* Floating shapes */
+  .shape {
+    position: absolute; border-radius: 50%; opacity: 0.1;
+    animation: floatShape 6s ease-in-out infinite;
+  }
+  .shape-1 { width: 300px; height: 300px; background: #fff; top: -50px; right: -80px; animation-delay: 0s; }
+  .shape-2 { width: 200px; height: 200px; background: #fff; bottom: -40px; left: -60px; animation-delay: 2s; }
+  .shape-3 { width: 150px; height: 150px; background: #fff; top: 40%; left: 10%; animation-delay: 4s; }
+  @keyframes floatShape {
+    0%,100% { transform: translateY(0) rotate(0); }
+    50% { transform: translateY(-20px) rotate(5deg); }
+  }
+
+  /* ========== Sections ========== */
+  .section {
+    max-width: 1000px; margin: 0 auto;
+    padding: 80px 24px;
+  }
+  .section-title {
+    font-size: clamp(24px, 4vw, 36px); font-weight: 800;
+    text-align: center; margin-bottom: 12px;
+    background: linear-gradient(135deg, #6c63ff, #e91e8c);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .section-subtitle {
+    text-align: center; color: #94a3b8; font-size: 16px;
+    margin-bottom: 48px; max-width: 600px; margin-left: auto; margin-right: auto;
+  }
+
+  /* ========== Cards ========== */
+  .card {
+    background: #fff; border-radius: 20px; padding: 36px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.06);
+    margin-bottom: 32px;
+    transition: transform .3s, box-shadow .3s;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.1);
+  }
+  .card h3 {
+    font-size: 20px; margin-bottom: 16px; display: flex;
+    align-items: center; gap: 10px;
+  }
+  .card h3 .icon {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .card p, .card li { color: #4a5568; font-size: 15px; }
+  .card ul { padding-left: 20px; }
+  .card li { margin-bottom: 6px; }
+
+  /* ========== Analogy Section ========== */
+  .analogy-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px;
+  }
+  .analogy-card {
+    background: #fff; border-radius: 20px; padding: 32px; text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.06);
+    transition: all .3s;
+  }
+  .analogy-card:hover { transform: translateY(-4px); }
+  .analogy-emoji { font-size: 48px; margin-bottom: 16px; display: block; }
+  .analogy-card h4 { font-size: 18px; margin-bottom: 4px; color: #1a202c; }
+  .analogy-card .analogy-role { font-size: 13px; color: #6c63ff; font-weight: 600; margin-bottom: 12px; }
+  .analogy-card p { font-size: 14px; color: #64748b; }
+
+  /* ========== Architecture Diagram ========== */
+  .arch-diagram {
+    background: #fff; border-radius: 20px; padding: 40px 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.06);
+    overflow-x: auto;
+  }
+  .arch-flow {
+    display: flex; align-items: stretch; justify-content: center;
+    gap: 0; min-width: 700px; padding: 20px 0;
+    flex-wrap: nowrap;
+  }
+  .arch-block {
+    flex: 0 0 180px; border-radius: 16px; padding: 24px 16px;
+    text-align: center; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .arch-block .arch-icon { font-size: 36px; margin-bottom: 8px; }
+  .arch-block h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .arch-block p { font-size: 12px; opacity: 0.8; }
+
+  .arch-block.user { background: linear-gradient(135deg, #e0f2fe, #bae6fd); color: #0369a1; }
+  .arch-block.frontend { background: linear-gradient(135deg, #ede9fe, #c4b5fd); color: #5b21b6; }
+  .arch-block.backend { background: linear-gradient(135deg, #fce7f3, #f9a8d4); color: #9d174d; }
+  .arch-block.database { background: linear-gradient(135deg, #d1fae5, #6ee7b7); color: #065f46; }
+
+  .arch-arrow {
+    flex: 0 0 60px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: #94a3b8; font-size: 11px;
+  }
+  .arch-arrow .arrow-line {
+    width: 40px; height: 2px; background: #cbd5e1; position: relative; margin: 4px 0;
+  }
+  .arch-arrow .arrow-line::after {
+    content: ''; position: absolute; right: -4px; top: -4px;
+    border: 5px solid transparent; border-left-color: #cbd5e1;
+  }
+  .arch-arrow span { font-size: 10px; color: #94a3b8; white-space: nowrap; }
+
+  /* ========== Layer Detail ========== */
+  .layer-section { margin-bottom: 40px; }
+  .layer-header {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 20px;
+    padding-bottom: 16px; border-bottom: 2px solid #f1f5f9;
+  }
+  .layer-badge {
+    width: 48px; height: 48px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; flex-shrink: 0;
+  }
+  .layer-badge.purple { background: linear-gradient(135deg, #ede9fe, #c4b5fd); }
+  .layer-badge.pink { background: linear-gradient(135deg, #fce7f3, #f9a8d4); }
+  .layer-badge.green { background: linear-gradient(135deg, #d1fae5, #6ee7b7); }
+  .layer-badge.blue { background: linear-gradient(135deg, #dbeafe, #93c5fd); }
+  .layer-badge.orange { background: linear-gradient(135deg, #ffedd5, #fdba74); }
+  .layer-header h3 { font-size: 22px; font-weight: 700; }
+  .layer-header h3 small { font-size: 14px; color: #94a3b8; font-weight: 400; margin-left: 8px; }
+
+  .tech-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .tech-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 50px; font-size: 13px; font-weight: 500;
+    background: #f8fafc; border: 1px solid #e2e8f0; color: #475569;
+  }
+  .tech-tag .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+
+  /* ========== Comparison Table ========== */
+  .compare-table {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    border-radius: 16px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.06);
+    margin: 20px 0;
+  }
+  .compare-table th {
+    background: linear-gradient(135deg, #6c63ff, #e91e8c);
+    color: #fff; padding: 16px 20px; font-size: 15px; font-weight: 600;
+    text-align: left;
+  }
+  .compare-table td {
+    padding: 14px 20px; font-size: 14px; background: #fff;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table tr:hover td { background: #faf5ff; }
+  .compare-table td:first-child { font-weight: 600; color: #1a202c; white-space: nowrap; }
+
+  /* ========== Timeline / Steps ========== */
+  .steps { position: relative; padding-left: 40px; }
+  .steps::before {
+    content: ''; position: absolute; left: 15px; top: 8px; bottom: 8px;
+    width: 3px; background: linear-gradient(180deg, #6c63ff, #e91e8c);
+    border-radius: 3px;
+  }
+  .step {
+    position: relative; margin-bottom: 32px;
+    background: #fff; border-radius: 16px; padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
+  }
+  .step::before {
+    content: attr(data-step); position: absolute;
+    left: -40px; top: 24px; width: 32px; height: 32px;
+    background: linear-gradient(135deg, #6c63ff, #e91e8c);
+    color: #fff; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+    box-shadow: 0 2px 8px rgba(108,99,255,0.3);
+  }
+  .step h4 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .step p { color: #64748b; font-size: 14px; }
+
+  /* ========== Interactive Demo ========== */
+  .demo-container {
+    background: #fff; border-radius: 20px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.06);
+  }
+  .demo-browser {
+    background: #f1f5f9; padding: 12px 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .demo-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+  }
+  .demo-dot.r { background: #f87171; }
+  .demo-dot.y { background: #fbbf24; }
+  .demo-dot.g { background: #34d399; }
+  .demo-url {
+    flex: 1; background: #fff; border-radius: 6px; padding: 6px 12px;
+    font-size: 13px; color: #64748b; margin-left: 8px;
+  }
+  .demo-body { padding: 32px; }
+  .demo-btn {
+    display: inline-block; padding: 10px 24px;
+    background: linear-gradient(135deg, #6c63ff, #e91e8c);
+    color: #fff; border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all .3s; margin: 4px;
+  }
+  .demo-btn:hover { transform: scale(1.05); opacity: 0.9; }
+  .demo-btn.outline {
+    background: #fff; color: #6c63ff;
+    border: 2px solid #6c63ff;
+  }
+
+  .demo-output {
+    margin-top: 20px; padding: 20px; border-radius: 12px;
+    background: #1e1e2e; color: #a6e3a1; font-family: 'Courier New', monospace;
+    font-size: 13px; line-height: 1.8; min-height: 120px;
+    white-space: pre-wrap; position: relative;
+  }
+  .demo-output .cursor {
+    display: inline-block; width: 8px; height: 16px;
+    background: #a6e3a1; animation: blink 1s step-end infinite;
+    vertical-align: middle;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ========== FAQ Accordion ========== */
+  .faq-item {
+    background: #fff; border-radius: 16px; margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    overflow: hidden; transition: all .3s;
+  }
+  .faq-q {
+    padding: 20px 24px; font-size: 16px; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center;
+    justify-content: space-between; gap: 16px;
+    transition: background .2s;
+  }
+  .faq-q:hover { background: #faf5ff; }
+  .faq-q .arrow { transition: transform .3s; font-size: 18px; color: #94a3b8; }
+  .faq-item.open .faq-q .arrow { transform: rotate(180deg); }
+  .faq-a {
+    max-height: 0; overflow: hidden; transition: max-height .4s ease, padding .3s;
+    padding: 0 24px; color: #64748b; font-size: 14px;
+  }
+  .faq-item.open .faq-a {
+    max-height: 500px; padding: 0 24px 20px;
+  }
+
+  /* ========== Web vs App ========== */
+  .vs-container {
+    display: grid; grid-template-columns: 1fr 60px 1fr; gap: 0; align-items: start;
+  }
+  @media (max-width: 700px) {
+    .vs-container { grid-template-columns: 1fr; gap: 16px; }
+    .vs-badge { justify-self: center; }
+  }
+  .vs-card {
+    background: #fff; border-radius: 20px; padding: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.06);
+  }
+  .vs-card h4 {
+    font-size: 20px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .vs-badge {
+    align-self: center; justify-self: center;
+    width: 48px; height: 48px; border-radius: 50%;
+    background: linear-gradient(135deg, #6c63ff, #e91e8c);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 16px;
+  }
+  .vs-list { list-style: none; padding: 0; }
+  .vs-list li {
+    padding: 8px 0; font-size: 14px; color: #4a5568;
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .vs-list li::before {
+    content: '✅'; flex-shrink: 0; font-size: 14px;
+  }
+
+  /* ========== Highlight Boxes ========== */
+  .highlight-box {
+    border-radius: 16px; padding: 24px 28px; margin: 20px 0;
+    display: flex; gap: 16px; align-items: flex-start;
+  }
+  .highlight-box.tip { background: #eff6ff; border-left: 4px solid #3b82f6; }
+  .highlight-box.fun { background: #fdf4ff; border-left: 4px solid #d946ef; }
+  .highlight-box.warn { background: #fffbeb; border-left: 4px solid #f59e0b; }
+  .highlight-box .hl-icon { font-size: 24px; flex-shrink: 0; }
+  .highlight-box .hl-text { font-size: 14px; color: #475569; }
+  .highlight-box .hl-text strong { color: #1e293b; }
+
+  /* ========== Code Block ========== */
+  .code-block {
+    background: #1e1e2e; border-radius: 12px; padding: 20px 24px;
+    margin: 16px 0; overflow-x: auto;
+    font-family: 'Courier New', monospace; font-size: 13px;
+    line-height: 1.7; color: #cdd6f4;
+  }
+  .code-block .comment { color: #6c7086; }
+  .code-block .keyword { color: #cba6f7; }
+  .code-block .string { color: #a6e3a1; }
+  .code-block .tag { color: #89b4fa; }
+  .code-block .attr { color: #fab387; }
+
+  /* ========== Footer ========== */
+  .footer {
+    text-align: center; padding: 40px 24px 60px;
+    color: #94a3b8; font-size: 14px;
+  }
+  .footer .heart { color: #f43f5e; display: inline-block; animation: heartbeat 1.5s infinite; }
+  @keyframes heartbeat {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+
+  /* ========== Scroll Animations ========== */
+  .fade-up {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+  /* ========== Diagram: Request Flow ========== */
+  .flow-diagram {
+    display: flex; flex-direction: column; gap: 0; align-items: center;
+    padding: 20px;
+  }
+  .flow-step-row {
+    display: flex; align-items: center; gap: 12px; width: 100%; max-width: 600px;
+    justify-content: center;
+  }
+  .flow-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, #6c63ff, #e91e8c);
+    color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .flow-label {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
+    padding: 10px 16px; font-size: 13px; color: #475569; flex: 1;
+  }
+  .flow-arrow-down {
+    font-size: 20px; color: #cbd5e1; text-align: center; padding: 4px 0;
+  }
+
+  /* ========== Pill Tabs ========== */
+  .pill-tabs {
+    display: flex; gap: 8px; justify-content: center; margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+  .pill-tab {
+    padding: 8px 20px; border-radius: 50px; border: 2px solid #e2e8f0;
+    background: #fff; font-size: 14px; font-weight: 600;
+    color: #64748b; cursor: pointer; transition: all .3s;
+  }
+  .pill-tab:hover { border-color: #c4b5fd; color: #6c63ff; }
+  .pill-tab.active {
+    background: linear-gradient(135deg, #6c63ff, #e91e8c);
+    color: #fff; border-color: transparent;
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ========== Tool card grid ========== */
+  .tool-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px; margin-top: 16px;
+  }
+  .tool-card {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px;
+    padding: 20px 12px; text-align: center;
+    transition: all .3s; cursor: default;
+  }
+  .tool-card:hover { border-color: #c4b5fd; background: #faf5ff; transform: translateY(-2px); }
+  .tool-card .tool-icon { font-size: 32px; margin-bottom: 8px; }
+  .tool-card .tool-name { font-size: 14px; font-weight: 600; color: #1e293b; }
+  .tool-card .tool-desc { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+
+  /* ========== Summary ========== */
+  .summary-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+  }
+  .summary-card {
+    background: #fff; border-radius: 16px; padding: 28px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
+    border-top: 4px solid;
+    transition: transform .3s;
+  }
+  .summary-card:hover { transform: translateY(-4px); }
+  .summary-card:nth-child(1) { border-color: #6c63ff; }
+  .summary-card:nth-child(2) { border-color: #e91e8c; }
+  .summary-card:nth-child(3) { border-color: #10b981; }
+  .summary-card:nth-child(4) { border-color: #f59e0b; }
+  .summary-card .s-icon { font-size: 36px; margin-bottom: 12px; }
+  .summary-card h4 { font-size: 16px; margin-bottom: 6px; }
+  .summary-card p { font-size: 13px; color: #64748b; }
+
+  /* ========== Progress Indicator ========== */
+  .progress-bar {
+    position: fixed; top: 60px; left: 0; height: 3px; z-index: 999;
+    background: linear-gradient(90deg, #6c63ff, #e91e8c);
+    transition: width 0.1s linear; width: 0%;
+  }
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="nav-logo">🚀 开发入门</div>
+    <button class="menu-btn" onclick="toggleMenu()" aria-label="菜单">☰</button>
+    <div class="nav-links" id="navLinks">
+      <a href="#analogy">餐厅比喻</a>
+      <a href="#architecture">整体架构</a>
+      <a href="#frontend">前端</a>
+      <a href="#backend">后端</a>
+      <a href="#database">数据库</a>
+      <a href="#webvsapp">Web vs App</a>
+      <a href="#flow">开发流程</a>
+      <a href="#demo">互动演示</a>
+      <a href="#faq">常见问题</a>
+    </div>
+  </div>
+</nav>
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- Hero -->
+<header class="hero" id="top">
+  <div class="shape shape-1"></div>
+  <div class="shape shape-2"></div>
+  <div class="shape shape-3"></div>
+  <div class="hero-content">
+    <h1>给老婆的<br>软件开发入门指南 <span class="emoji">💕</span></h1>
+    <p>用最通俗的语言，带你理解一个网站 / App 是怎么从零做出来的。看完这个，你就再也不会觉得程序员在说"外语"了 😄</p>
+    <a href="#analogy" class="hero-btn">开始学习 ↓</a>
+  </div>
+</header>
+
+<!-- ==================== Section 1: Restaurant Analogy ==================== -->
+<section class="section" id="analogy">
+  <h2 class="section-title fade-up">🍽️ 先来一个比喻</h2>
+  <p class="section-subtitle fade-up">做一个软件产品，就像开一家餐厅</p>
+
+  <div class="analogy-grid fade-up">
+    <div class="analogy-card">
+      <span class="analogy-emoji">👤</span>
+      <h4>顾客</h4>
+      <div class="analogy-role">= 用户 (User)</div>
+      <p>走进餐厅、看菜单、点菜的人——就是使用你产品的人</p>
+    </div>
+    <div class="analogy-card">
+      <span class="analogy-emoji">📋</span>
+      <h4>菜单 + 餐厅装修</h4>
+      <div class="analogy-role">= 前端 (Frontend)</div>
+      <p>顾客直接看到和接触到的一切：装修、菜单、座椅、灯光</p>
+    </div>
+    <div class="analogy-card">
+      <span class="analogy-emoji">👨‍🍳</span>
+      <h4>后厨 + 厨师</h4>
+      <div class="analogy-role">= 后端 (Backend)</div>
+      <p>顾客看不到但很重要的部分：接收订单、处理食材、做菜</p>
+    </div>
+    <div class="analogy-card">
+      <span class="analogy-emoji">🏪</span>
+      <h4>食材仓库 + 冰箱</h4>
+      <div class="analogy-role">= 数据库 (Database)</div>
+      <p>存放所有食材原料的地方——存放所有数据的地方</p>
+    </div>
+    <div class="analogy-card">
+      <span class="analogy-emoji">🛎️</span>
+      <h4>服务员传菜</h4>
+      <div class="analogy-role">= API 接口</div>
+      <p>服务员在前厅和后厨之间传递信息——前端和后端之间的通信桥梁</p>
+    </div>
+    <div class="analogy-card">
+      <span class="analogy-emoji">🌐</span>
+      <h4>餐厅的地址</h4>
+      <div class="analogy-role">= 域名 + 服务器</div>
+      <p>你的餐厅开在哪里、顾客怎么找到你——网站的网址和服务器</p>
+    </div>
+  </div>
+
+  <div class="highlight-box fun fade-up">
+    <div class="hl-icon">💡</div>
+    <div class="hl-text">
+      <strong>所以，当你打开淘宝：</strong><br>
+      你看到的页面 = 前端（餐厅装修）<br>
+      你点击「购买」后在背后处理订单的系统 = 后端（后厨）<br>
+      存储商品信息、你的收货地址 = 数据库（仓库）
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Section 2: Architecture ==================== -->
+<section class="section" id="architecture">
+  <h2 class="section-title fade-up">🏗️ 整体架构</h2>
+  <p class="section-subtitle fade-up">一个请求从你点击到看到结果，经历了什么？</p>
+
+  <div class="arch-diagram fade-up">
+    <div class="arch-flow">
+      <div class="arch-block user">
+        <div class="arch-icon">👤</div>
+        <h4>用户</h4>
+        <p>打开浏览器<br>或 App</p>
+      </div>
+      <div class="arch-arrow">
+        <span>输入网址</span>
+        <div class="arrow-line"></div>
+        <span>点击按钮</span>
+      </div>
+      <div class="arch-block frontend">
+        <div class="arch-icon">🎨</div>
+        <h4>前端</h4>
+        <p>展示页面<br>处理交互</p>
+      </div>
+      <div class="arch-arrow">
+        <span>发送请求</span>
+        <div class="arrow-line"></div>
+        <span>API 调用</span>
+      </div>
+      <div class="arch-block backend">
+        <div class="arch-icon">⚙️</div>
+        <h4>后端</h4>
+        <p>业务逻辑<br>数据处理</p>
+      </div>
+      <div class="arch-arrow">
+        <span>读/写数据</span>
+        <div class="arrow-line"></div>
+        <span>SQL 查询</span>
+      </div>
+      <div class="arch-block database">
+        <div class="arch-icon">🗄️</div>
+        <h4>数据库</h4>
+        <p>存储数据<br>持久化</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card fade-up" style="margin-top: 32px;">
+    <h3>
+      <span class="icon" style="background:#eff6ff;color:#3b82f6;">📡</span>
+      举个例子：你在微信搜索一个公众号文章
+    </h3>
+    <div class="flow-diagram">
+      <div class="flow-step-row">
+        <div class="flow-num">1</div>
+        <div class="flow-label">你在搜索框输入关键词，点击「搜索」</div>
+      </div>
+      <div class="flow-arrow-down">↓</div>
+      <div class="flow-step-row">
+        <div class="flow-num">2</div>
+        <div class="flow-label"><strong>前端</strong>把你输入的关键词打包成一个"请求"，发送给服务器</div>
+      </div>
+      <div class="flow-arrow-down">↓</div>
+      <div class="flow-step-row">
+        <div class="flow-num">3</div>
+        <div class="flow-label"><strong>后端</strong>收到请求，理解你要搜什么，然后去数据库里查找匹配的文章</div>
+      </div>
+      <div class="flow-arrow-down">↓</div>
+      <div class="flow-step-row">
+        <div class="flow-num">4</div>
+        <div class="flow-label"><strong>数据库</strong>返回匹配的文章列表（标题、摘要、封面图……）</div>
+      </div>
+      <div class="flow-arrow-down">↓</div>
+      <div class="flow-step-row">
+        <div class="flow-num">5</div>
+        <div class="flow-label"><strong>后端</strong>把结果整理好，返回给前端</div>
+      </div>
+      <div class="flow-arrow-down">↓</div>
+      <div class="flow-step-row">
+        <div class="flow-num">6</div>
+        <div class="flow-label"><strong>前端</strong>把结果漂亮地展示在你的屏幕上</div>
+      </div>
+    </div>
+    <div class="highlight-box tip" style="margin-top: 16px;">
+      <div class="hl-icon">⏱️</div>
+      <div class="hl-text">以上所有步骤，通常在 <strong>几百毫秒内</strong> 完成——也就是你感觉"一点就出来了"</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Section 3: Frontend ==================== -->
+<section class="section" id="frontend">
+  <h2 class="section-title fade-up">🎨 前端：用户看到的一切</h2>
+  <p class="section-subtitle fade-up">负责页面长什么样、怎么交互、好不好看</p>
+
+  <div class="card fade-up">
+    <div class="layer-header">
+      <div class="layer-badge purple">🎨</div>
+      <h3>前端三件套 <small>网页的基础组成</small></h3>
+    </div>
+
+    <div class="analogy-grid" style="margin-bottom: 24px;">
+      <div class="analogy-card" style="border-top: 4px solid #f97316;">
+        <span class="analogy-emoji">🧱</span>
+        <h4>HTML</h4>
+        <div class="analogy-role" style="color:#f97316;">骨架 / 结构</div>
+        <p>决定页面上<strong>有什么</strong>：标题、文字、图片、按钮的位置</p>
+      </div>
+      <div class="analogy-card" style="border-top: 4px solid #3b82f6;">
+        <span class="analogy-emoji">💄</span>
+        <h4>CSS</h4>
+        <div class="analogy-role" style="color:#3b82f6;">化妆 / 样式</div>
+        <p>决定页面<strong>长什么样</strong>：颜色、字号、间距、动画效果</p>
+      </div>
+      <div class="analogy-card" style="border-top: 4px solid #eab308;">
+        <span class="analogy-emoji">🏃</span>
+        <h4>JavaScript</h4>
+        <div class="analogy-role" style="color:#eab308;">行为 / 交互</div>
+        <p>决定页面<strong>怎么动</strong>：点击按钮弹窗、下拉刷新、表单验证</p>
+      </div>
+    </div>
+
+    <div class="highlight-box fun">
+      <div class="hl-icon">🏠</div>
+      <div class="hl-text">
+        打个比方建一栋房子：<br>
+        <strong>HTML</strong> = 砖墙、梁柱、门窗（结构）<br>
+        <strong>CSS</strong> = 粉刷、装修、窗帘（外观）<br>
+        <strong>JavaScript</strong> = 电路、开关、智能家居（功能交互）
+      </div>
+    </div>
+
+    <div class="code-block">
+<span class="comment">&lt;!-- 这就是一段最简单的网页代码 --&gt;</span>
+
+<span class="comment">&lt;!-- HTML 部分：定义结构 --&gt;</span>
+<span class="tag">&lt;h1&gt;</span>欢迎来到我的小店<span class="tag">&lt;/h1&gt;</span>
+<span class="tag">&lt;p&gt;</span>今天打八折哦！<span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;button</span> <span class="attr">onclick</span>=<span class="string">"alert('谢谢光临！')"</span><span class="tag">&gt;</span>点我下单<span class="tag">&lt;/button&gt;</span>
+
+<span class="comment">&lt;!-- CSS 部分：让它变好看 --&gt;</span>
+<span class="tag">&lt;style&gt;</span>
+  <span class="keyword">h1</span> { <span class="attr">color</span>: <span class="string">pink</span>; }
+  <span class="keyword">button</span> { <span class="attr">background</span>: <span class="string">#6c63ff</span>; <span class="attr">color</span>: <span class="string">white</span>; }
+<span class="tag">&lt;/style&gt;</span>
+    </div>
+
+    <h4 style="margin-top: 24px; margin-bottom: 12px;">🔧 常用前端框架/工具</h4>
+    <p style="color: #64748b; font-size: 14px; margin-bottom: 12px;">框架 = 别人写好的一套工具，让开发更快更方便（相当于"预制菜包"）</p>
+    <div class="tool-grid">
+      <div class="tool-card">
+        <div class="tool-icon">⚛️</div>
+        <div class="tool-name">React</div>
+        <div class="tool-desc">Meta(Facebook) 出品</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">💚</div>
+        <div class="tool-name">Vue</div>
+        <div class="tool-desc">国人尤雨溪创建，国内很火</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">🅰️</div>
+        <div class="tool-name">Angular</div>
+        <div class="tool-desc">Google 出品</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">📱</div>
+        <div class="tool-name">微信小程序</div>
+        <div class="tool-desc">微信生态专属</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Section 4: Backend ==================== -->
+<section class="section" id="backend">
+  <h2 class="section-title fade-up">⚙️ 后端：幕后的大脑</h2>
+  <p class="section-subtitle fade-up">处理业务逻辑、连接数据库、保障安全</p>
+
+  <div class="card fade-up">
+    <div class="layer-header">
+      <div class="layer-badge pink">⚙️</div>
+      <h3>后端在做什么？</h3>
+    </div>
+
+    <ul style="padding-left: 20px;">
+      <li><strong>接收请求</strong> —— 前端说"用户要查看订单"，后端说"收到！"</li>
+      <li><strong>业务逻辑</strong> —— 验证用户身份、检查库存、计算价格、生成优惠券</li>
+      <li><strong>操作数据库</strong> —— 从数据库读取信息，或者把新数据存进去</li>
+      <li><strong>返回结果</strong> —— 把处理好的数据返回给前端展示</li>
+      <li><strong>安全保障</strong> —— 防止别人偷数据、防止恶意攻击</li>
+    </ul>
+
+    <div class="highlight-box tip" style="margin-top: 20px;">
+      <div class="hl-icon">🔐</div>
+      <div class="hl-text">
+        <strong>为什么需要后端？</strong> 就像你网购时，价格计算和库存检查必须在商家的服务器上完成，而不能让用户自己改——不然谁都给自己打一折了 😂
+      </div>
+    </div>
+
+    <h4 style="margin-top: 24px; margin-bottom: 12px;">🔧 常用后端语言/框架</h4>
+    <div class="tool-grid">
+      <div class="tool-card">
+        <div class="tool-icon">🐍</div>
+        <div class="tool-name">Python</div>
+        <div class="tool-desc">简单易学，AI 首选</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">☕</div>
+        <div class="tool-name">Java</div>
+        <div class="tool-desc">企业级应用最常用</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">🟢</div>
+        <div class="tool-name">Node.js</div>
+        <div class="tool-desc">用 JavaScript 写后端</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">🐹</div>
+        <div class="tool-name">Go</div>
+        <div class="tool-desc">Google 出品，高性能</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- API 解释 -->
+  <div class="card fade-up">
+    <h3>
+      <span class="icon" style="background:#fef3c7;color:#d97706;">🛎️</span>
+      什么是 API？
+    </h3>
+    <p><strong>API (Application Programming Interface)</strong> = 前端和后端之间的"传话筒"</p>
+    <br>
+    <p>它就像餐厅的<strong>点菜单</strong>：</p>
+    <ul>
+      <li>菜单上写了你能点什么菜（有什么功能可以用）</li>
+      <li>你按格式填单子（按规定格式发请求）</li>
+      <li>服务员把单子送到后厨（前端把请求发给后端）</li>
+      <li>后厨做好菜端出来（后端返回数据）</li>
+    </ul>
+    <div class="code-block" style="margin-top: 16px;">
+<span class="comment">// 一个 API 的例子：获取用户信息</span>
+<span class="comment">// 前端发送请求：</span>
+<span class="keyword">GET</span> <span class="string">https://api.example.com/user/123</span>
+
+<span class="comment">// 后端返回数据（JSON 格式）：</span>
+{
+  <span class="attr">"name"</span>: <span class="string">"小红"</span>,
+  <span class="attr">"age"</span>: <span class="string">28</span>,
+  <span class="attr">"avatar"</span>: <span class="string">"https://xxx.com/photo.jpg"</span>
+}
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Section 5: Database ==================== -->
+<section class="section" id="database">
+  <h2 class="section-title fade-up">🗄️ 数据库：数据的家</h2>
+  <p class="section-subtitle fade-up">所有信息都得有个地方存，数据库就是那个地方</p>
+
+  <div class="card fade-up">
+    <div class="layer-header">
+      <div class="layer-badge green">🗄️</div>
+      <h3>数据库长什么样？</h3>
+    </div>
+    <p>你可以把数据库想象成一个<strong>超大号的 Excel 表格</strong>：</p>
+
+    <div style="overflow-x: auto; margin: 20px 0;">
+      <table class="compare-table">
+        <tr>
+          <th>ID</th><th>用户名</th><th>手机号</th><th>注册时间</th><th>VIP等级</th>
+        </tr>
+        <tr>
+          <td>1</td><td>小红</td><td>138****1234</td><td>2024-01-15</td><td>⭐⭐⭐</td>
+        </tr>
+        <tr>
+          <td>2</td><td>小明</td><td>139****5678</td><td>2024-03-20</td><td>⭐</td>
+        </tr>
+        <tr>
+          <td>3</td><td>小丽</td><td>137****9012</td><td>2024-06-01</td><td>⭐⭐</td>
+        </tr>
+      </table>
+    </div>
+
+    <p>一个产品通常有很多张这样的表：<strong>用户表、商品表、订单表、评论表</strong>……它们之间互相关联。</p>
+
+    <h4 style="margin-top: 24px; margin-bottom: 12px;">🔧 常见数据库</h4>
+    <div class="tool-grid">
+      <div class="tool-card">
+        <div class="tool-icon">🐬</div>
+        <div class="tool-name">MySQL</div>
+        <div class="tool-desc">最流行的关系型数据库</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">🐘</div>
+        <div class="tool-name">PostgreSQL</div>
+        <div class="tool-desc">功能强大，越来越火</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">🍃</div>
+        <div class="tool-name">MongoDB</div>
+        <div class="tool-desc">存 JSON 文档</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">⚡</div>
+        <div class="tool-name">Redis</div>
+        <div class="tool-desc">超快的缓存数据库</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Section 6: Web vs App ==================== -->
+<section class="section" id="webvsapp">
+  <h2 class="section-title fade-up">🌐 vs 📱 Web 开发 vs App 开发</h2>
+  <p class="section-subtitle fade-up">它们有什么不同？能不能"一次开发，到处运行"？</p>
+
+  <div class="vs-container fade-up">
+    <div class="vs-card">
+      <h4>🌐 Web（网页/网站）</h4>
+      <ul class="vs-list">
+        <li>通过浏览器访问，无需安装</li>
+        <li>一套代码，电脑/手机都能打开</li>
+        <li>更新快，改了服务器就生效</li>
+        <li>受浏览器限制，不能调用所有手机功能</li>
+        <li>技术栈：HTML + CSS + JS</li>
+        <li>如：淘宝网页版、知乎网页版</li>
+      </ul>
+    </div>
+    <div class="vs-badge">VS</div>
+    <div class="vs-card">
+      <h4>📱 App（手机应用）</h4>
+      <ul class="vs-list">
+        <li>需要从应用商店下载安装</li>
+        <li>体验更流畅，可以离线使用</li>
+        <li>可以调用摄像头、GPS、推送通知等</li>
+        <li>需要分别开发 iOS 和 Android 版本</li>
+        <li>发版需要审核，更新慢</li>
+        <li>如：微信 App、抖音 App</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card fade-up" style="margin-top: 32px;">
+    <h3>
+      <span class="icon" style="background:#e0f2fe;color:#0284c7;">🤔</span>
+      那有没有折中方案？
+    </h3>
+    <p style="margin-bottom: 16px;">有的！现在很多方案可以"一次写代码，多端运行"：</p>
+
+    <div class="tool-grid">
+      <div class="tool-card">
+        <div class="tool-icon">📱</div>
+        <div class="tool-name">小程序</div>
+        <div class="tool-desc">在微信/支付宝内运行，不用安装</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">⚛️</div>
+        <div class="tool-name">React Native</div>
+        <div class="tool-desc">JS 写代码，编译成原生 App</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">💙</div>
+        <div class="tool-name">Flutter</div>
+        <div class="tool-desc">Google 出品，一套代码多端运行</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">🌐</div>
+        <div class="tool-name">PWA</div>
+        <div class="tool-desc">网页也能像 App 一样被安装</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comparison Table -->
+  <div class="fade-up" style="margin-top: 32px;">
+    <div style="overflow-x: auto;">
+      <table class="compare-table">
+        <tr>
+          <th>对比项</th><th>🌐 Web 网页</th><th>📱 原生 App</th><th>💬 小程序</th>
+        </tr>
+        <tr>
+          <td>是否需要安装</td><td>❌ 不需要</td><td>✅ 需要下载</td><td>❌ 不需要</td>
+        </tr>
+        <tr>
+          <td>用户体验</td><td>⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐⭐</td>
+        </tr>
+        <tr>
+          <td>开发成本</td><td>💰 低</td><td>💰💰💰 高</td><td>💰💰 中</td>
+        </tr>
+        <tr>
+          <td>调用手机功能</td><td>有限</td><td>全部</td><td>部分</td>
+        </tr>
+        <tr>
+          <td>更新方式</td><td>即时生效</td><td>需要审核发版</td><td>即时生效</td>
+        </tr>
+        <tr>
+          <td>典型例子</td><td>百度、知乎网页版</td><td>微信、抖音</td><td>美团小程序</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Section 7: Dev Flow ==================== -->
+<section class="section" id="flow">
+  <h2 class="section-title fade-up">🔄 开发一个产品的完整流程</h2>
+  <p class="section-subtitle fade-up">从一个想法到用户能用上，要经过哪些步骤？</p>
+
+  <div class="steps fade-up">
+    <div class="step" data-step="1">
+      <h4>💡 需求分析 & 产品设计</h4>
+      <p>想清楚"要做什么"。产品经理画原型图、写需求文档，回答这些问题：目标用户是谁？解决什么问题？有哪些核心功能？</p>
+    </div>
+    <div class="step" data-step="2">
+      <h4>🎨 UI/UX 设计</h4>
+      <p>设计师用 Figma 等工具画出好看的界面。确定颜色、字体、按钮样式、页面布局。就像装修房子前先出效果图。</p>
+    </div>
+    <div class="step" data-step="3">
+      <h4>🏗️ 技术方案设计</h4>
+      <p>程序员们讨论用什么技术来实现：选什么前端框架？后端用什么语言？数据库怎么设计？就像盖房子前要画建筑图纸。</p>
+    </div>
+    <div class="step" data-step="4">
+      <h4>👨‍💻 编码开发</h4>
+      <p>前端工程师和后端工程师同时开工。前端按设计稿把页面做出来，后端写业务逻辑和数据库。这是最耗时的阶段。</p>
+    </div>
+    <div class="step" data-step="5">
+      <h4>🧪 测试</h4>
+      <p>测试工程师（QA）像"最挑剔的顾客"一样找Bug。功能测试、性能测试、兼容性测试。发现问题就打回给开发修复。</p>
+    </div>
+    <div class="step" data-step="6">
+      <h4>🚀 部署上线</h4>
+      <p>把代码部署到服务器上，让全世界都能访问。配置域名、SSL证书（让网址有小锁头🔒）。App 还要提交到苹果/安卓应用商店审核。</p>
+    </div>
+    <div class="step" data-step="7">
+      <h4>📊 运维 & 迭代</h4>
+      <p>上线后要持续监控：服务器有没有挂？用户反馈什么问题？然后不断优化和增加新功能。一个产品永远在进化！</p>
+    </div>
+  </div>
+
+  <div class="highlight-box fun fade-up">
+    <div class="hl-icon">🔁</div>
+    <div class="hl-text">
+      <strong>现实中的开发不是一条直线</strong>，而是一个循环：上线 → 收集反馈 → 改进 → 再上线。这就是为什么你的 App 总是在更新 😄
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Section 8: Interactive Demo ==================== -->
+<section class="section" id="demo">
+  <h2 class="section-title fade-up">🎮 互动演示</h2>
+  <p class="section-subtitle fade-up">点点按钮，感受一下"请求-响应"的过程</p>
+
+  <div class="demo-container fade-up">
+    <div class="demo-browser">
+      <div class="demo-dot r"></div>
+      <div class="demo-dot y"></div>
+      <div class="demo-dot g"></div>
+      <div class="demo-url">🔒 https://my-shop.example.com</div>
+    </div>
+    <div class="demo-body">
+      <p style="margin-bottom: 16px; font-weight: 600;">模拟一个小商店的操作：</p>
+      <button class="demo-btn" onclick="simulateRequest('search')">🔍 搜索商品</button>
+      <button class="demo-btn" onclick="simulateRequest('order')">🛒 下单购买</button>
+      <button class="demo-btn" onclick="simulateRequest('login')">👤 用户登录</button>
+      <button class="demo-btn outline" onclick="clearOutput()">🗑️ 清空</button>
+
+      <div class="demo-output" id="demoOutput">
+<span style="color:#94e2d5;">欢迎来到互动演示！👆 点击上面的按钮试试</span>
+<span class="cursor"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Section 9: Common Tools ==================== -->
+<section class="section" id="tools">
+  <h2 class="section-title fade-up">🧰 开发者常用工具</h2>
+  <p class="section-subtitle fade-up">程序员们每天都在用的"武器"</p>
+
+  <div class="card fade-up">
+    <div class="tool-grid">
+      <div class="tool-card">
+        <div class="tool-icon">💻</div>
+        <div class="tool-name">VS Code</div>
+        <div class="tool-desc">最流行的代码编辑器</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">🐙</div>
+        <div class="tool-name">GitHub</div>
+        <div class="tool-desc">代码托管 & 协作平台</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">🎨</div>
+        <div class="tool-name">Figma</div>
+        <div class="tool-desc">UI 设计工具</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">📮</div>
+        <div class="tool-name">Postman</div>
+        <div class="tool-desc">测试 API 的工具</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">🐳</div>
+        <div class="tool-name">Docker</div>
+        <div class="tool-desc">打包运行环境</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">☁️</div>
+        <div class="tool-name">云服务器</div>
+        <div class="tool-desc">阿里云/AWS/腾讯云</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">🔀</div>
+        <div class="tool-name">Git</div>
+        <div class="tool-desc">代码版本控制</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">📝</div>
+        <div class="tool-name">飞书/Notion</div>
+        <div class="tool-desc">团队协作文档</div>
+      </div>
+    </div>
+
+    <div class="highlight-box tip" style="margin-top: 20px;">
+      <div class="hl-icon">🐙</div>
+      <div class="hl-text">
+        <strong>Git & GitHub 是什么？</strong><br>
+        <strong>Git</strong> 就像文档的"历史版本"功能——每次修改代码都会记录，可以随时回退到之前的版本。<br>
+        <strong>GitHub</strong> 就像代码的"百度网盘"——把代码存到云端，团队成员都能看到、一起改。<br>
+        你正在看的这个网页，就是通过 GitHub Pages 部署的！🎉
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Section 10: FAQ ==================== -->
+<section class="section" id="faq">
+  <h2 class="section-title fade-up">❓ 常见问题</h2>
+  <p class="section-subtitle fade-up">你可能还想问的问题</p>
+
+  <div class="fade-up">
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">前端和后端，哪个更难？<span class="arrow">▼</span></div>
+      <div class="faq-a">各有各的难点！前端需要关注视觉效果、用户体验、各种浏览器兼容性；后端需要处理复杂的业务逻辑、数据安全、高并发性能。就像问"化妆师和厨师哪个更难"一样，答案是"各有各的挑战"。</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">一个人能做出一个完整的产品吗？<span class="arrow">▼</span></div>
+      <div class="faq-a">可以！一个人全包（前端+后端+数据库）的开发者叫<strong>全栈工程师 (Full Stack Developer)</strong>。很多创业产品的初期版本就是一两个人做出来的。但复杂的产品（如微信、淘宝）一定需要一个大团队。</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">为什么开发一个 App 那么贵？<span class="arrow">▼</span></div>
+      <div class="faq-a">因为工作量真的很大！设计、前端、后端、测试、运维，每个环节都需要专业人员。另外，App 要同时适配 iPhone 和 Android，还要持续维护和更新。一个看似简单的功能，背后可能有几十个要考虑的细节。</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">不会编程，能做网站/App 吗？<span class="arrow">▼</span></div>
+      <div class="faq-a">能！现在有很多「无代码/低代码」工具，如<strong>WordPress</strong>（建网站）、<strong>微信小程序可视化搭建</strong>、<strong>Webflow</strong> 等，拖拖拽拽就能搭出简单的产品。不过如果要做复杂的定制功能，最终还是需要写代码。</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">什么是"服务器"？它放在哪里？<span class="arrow">▼</span></div>
+      <div class="faq-a">服务器就是一台<strong>24小时开着的电脑</strong>，专门用来运行你的网站/App 后端程序。以前公司自己买电脑放机房里，现在大家都用<strong>云服务器</strong>（如阿里云、腾讯云、AWS），就像"租电脑"，按需付费，弹性扩容。你可以理解为：你的网站住在云上的一个虚拟房间里。</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">AI 会取代程序员吗？<span class="arrow">▼</span></div>
+      <div class="faq-a">短期内不会取代，但会<strong>大大改变</strong>工作方式。AI（如 ChatGPT、GitHub Copilot）已经可以帮程序员写代码、Debug、写文档，就像计算器不会取代数学家，但会让他们效率更高。未来的程序员更像是"AI的指挥官"，告诉 AI 要做什么，然后检查和优化结果。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Summary ==================== -->
+<section class="section" id="summary">
+  <h2 class="section-title fade-up">📚 总结回顾</h2>
+  <p class="section-subtitle fade-up">记住这四个核心概念，你就抓住了软件开发的大框架</p>
+
+  <div class="summary-grid fade-up">
+    <div class="summary-card">
+      <div class="s-icon">🎨</div>
+      <h4>前端</h4>
+      <p>用户看到的一切，负责界面和交互</p>
+    </div>
+    <div class="summary-card">
+      <div class="s-icon">⚙️</div>
+      <h4>后端</h4>
+      <p>幕后的大脑，负责逻辑和安全</p>
+    </div>
+    <div class="summary-card">
+      <div class="s-icon">🗄️</div>
+      <h4>数据库</h4>
+      <p>数据的家，负责存储一切信息</p>
+    </div>
+    <div class="summary-card">
+      <div class="s-icon">🛎️</div>
+      <h4>API</h4>
+      <p>前后端的桥梁，负责传递信息</p>
+    </div>
+  </div>
+
+  <div class="card fade-up" style="margin-top: 32px; text-align: center; padding: 48px;">
+    <div style="font-size: 48px; margin-bottom: 16px;">🎉</div>
+    <h3 style="font-size: 24px; margin-bottom: 12px;">恭喜你看完了！</h3>
+    <p style="color: #64748b; max-width: 500px; margin: 0 auto; font-size: 15px;">
+      现在你已经从宏观上理解了一个软件产品是怎么构成的。<br>
+      下次程序员老公跟你说"在调 API""数据库挂了""前端样式有 Bug"，<br>
+      你就能心领神会地点头了 😄
+    </p>
+    <div style="margin-top: 24px; font-size: 24px;">
+      Made with <span style="color: #f43f5e;">❤️</span> by 你老公
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>用 <span class="heart">❤️</span> 制作 · 部署在 GitHub Pages</p>
+  <p style="margin-top: 4px; font-size: 12px;">这个网页本身就是一个前端项目哦！（纯 HTML + CSS + JavaScript）</p>
+</footer>
+
+<script>
+// ========== Mobile Menu ==========
+function toggleMenu() {
+  document.getElementById('navLinks').classList.toggle('show');
+}
+
+// ========== FAQ Accordion ==========
+function toggleFaq(el) {
+  el.classList.toggle('open');
+}
+
+// ========== Interactive Demo ==========
+const scenarios = {
+  search: {
+    steps: [
+      { text: '📱 [用户] 在搜索框输入 "连衣裙"，点击搜索', delay: 0 },
+      { text: '🎨 [前端] 收到！把关键词 "连衣裙" 打包成请求...', delay: 800 },
+      { text: '📡 [前端 → 后端] 发送请求: GET /api/search?q=连衣裙', delay: 1500 },
+      { text: '⚙️ [后端] 收到请求，开始处理...', delay: 2200 },
+      { text: '🗄️ [后端 → 数据库] SELECT * FROM products WHERE name LIKE "%连衣裙%"', delay: 2800 },
+      { text: '🗄️ [数据库] 找到了 128 条结果！返回数据...', delay: 3500 },
+      { text: '⚙️ [后端] 整理好数据，返回给前端', delay: 4100 },
+      { text: '🎨 [前端] 把 128 件连衣裙漂亮地展示在页面上', delay: 4700 },
+      { text: '✅ 完成！整个过程耗时约 200ms', delay: 5300 },
+    ]
+  },
+  order: {
+    steps: [
+      { text: '📱 [用户] 点击 "立即购买" 按钮', delay: 0 },
+      { text: '🎨 [前端] 收集订单信息：商品ID、数量、收货地址...', delay: 800 },
+      { text: '📡 [前端 → 后端] 发送请求: POST /api/order', delay: 1500 },
+      { text: '⚙️ [后端] 验证用户身份... ✅ 已登录', delay: 2200 },
+      { text: '⚙️ [后端] 检查库存... ✅ 还有 50 件', delay: 2800 },
+      { text: '⚙️ [后端] 计算价格：¥299 - 满减优惠 ¥30 = ¥269', delay: 3400 },
+      { text: '🗄️ [后端 → 数据库] 创建订单记录 & 扣减库存', delay: 4000 },
+      { text: '⚙️ [后端] 调用支付系统，生成支付链接...', delay: 4600 },
+      { text: '🎨 [前端] 弹出支付页面 💰', delay: 5200 },
+      { text: '✅ 下单成功！等待用户支付', delay: 5800 },
+    ]
+  },
+  login: {
+    steps: [
+      { text: '📱 [用户] 输入手机号 138****1234，点击 "获取验证码"', delay: 0 },
+      { text: '📡 [前端 → 后端] POST /api/send-code {phone: "138****1234"}', delay: 800 },
+      { text: '⚙️ [后端] 生成随机验证码: 8526', delay: 1500 },
+      { text: '⚙️ [后端] 调用短信服务商发送短信...', delay: 2100 },
+      { text: '📱 [用户] 收到短信，输入验证码 8526', delay: 2800 },
+      { text: '📡 [前端 → 后端] POST /api/login {phone: "138****1234", code: "8526"}', delay: 3500 },
+      { text: '⚙️ [后端] 验证验证码... ✅ 正确！', delay: 4100 },
+      { text: '⚙️ [后端] 生成登录凭证 (Token)，返回给前端', delay: 4700 },
+      { text: '🎨 [前端] 保存 Token，显示 "欢迎回来，小红！" 🎉', delay: 5300 },
+      { text: '✅ 登录成功！后续请求都会带上这个 Token 来证明身份', delay: 5900 },
+    ]
+  }
+};
+
+function simulateRequest(type) {
+  const output = document.getElementById('demoOutput');
+  const scenario = scenarios[type];
+
+  output.innerHTML = '<span style="color:#f9e2af;">⏳ 模拟中...</span>\n\n';
+
+  scenario.steps.forEach((step, i) => {
+    setTimeout(() => {
+      const line = document.createElement('div');
+      line.textContent = step.text;
+      line.style.opacity = '0';
+      line.style.transform = 'translateX(-10px)';
+      line.style.transition = 'all 0.3s';
+
+      // Remove old cursor
+      const oldCursor = output.querySelector('.cursor');
+      if (oldCursor) oldCursor.remove();
+
+      output.appendChild(line);
+
+      // Add cursor at the end
+      if (i === scenario.steps.length - 1) {
+        const cursor = document.createElement('span');
+        cursor.className = 'cursor';
+        output.appendChild(cursor);
+      }
+
+      // Trigger animation
+      requestAnimationFrame(() => {
+        line.style.opacity = '1';
+        line.style.transform = 'translateX(0)';
+      });
+
+      output.scrollTop = output.scrollHeight;
+    }, step.delay);
+  });
+}
+
+function clearOutput() {
+  document.getElementById('demoOutput').innerHTML =
+    '<span style="color:#94e2d5;">已清空，再点按钮试试吧 ✨</span>\n<span class="cursor"></span>';
+}
+
+// ========== Scroll Animations ==========
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+// ========== Progress Bar ==========
+window.addEventListener('scroll', () => {
+  const winScroll = document.documentElement.scrollTop;
+  const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+  const scrolled = (winScroll / height) * 100;
+  document.getElementById('progressBar').style.width = scrolled + '%';
+});
+
+// ========== Active Nav Link ==========
+const sections = document.querySelectorAll('section[id]');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(section => {
+    const sectionTop = section.offsetTop - 100;
+    if (scrollY >= sectionTop) current = section.id;
+  });
+
+  document.querySelectorAll('.nav-links a').forEach(a => {
+    a.classList.remove('active');
+    if (a.getAttribute('href') === '#' + current) a.classList.add('active');
+  });
+});
+
+// Close menu on link click (mobile)
+document.querySelectorAll('.nav-links a').forEach(a => {
+  a.addEventListener('click', () => {
+    document.getElementById('navLinks').classList.remove('show');
+  });
+});
+</script>
+</body>
+</html>
