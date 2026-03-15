@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM Token Entropy Visualizer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.container{max-width:960px;margin:0 auto;padding:20px}
+h1{text-align:center;margin-bottom:8px;font-size:1.8em;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{text-align:center;color:#64748b;font-size:0.9em;margin-bottom:24px}
+.card{background:#1e293b;border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid #334155}
+.card-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none}
+.card-header h2{font-size:1.05em;color:#94a3b8;font-weight:600}
+.card-header .toggle{color:#64748b;font-size:0.8em;transition:transform .2s}
+.card-header .toggle.collapsed{transform:rotate(-90deg)}
+.card-body{margin-top:16px}
+.card-body.hidden{display:none}
+.form-row{display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.form-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:150px}
+.form-group.full{flex-basis:100%}
+label{font-size:0.8em;color:#64748b;font-weight:500;text-transform:uppercase;letter-spacing:0.5px}
+input,textarea{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px 14px;color:#e2e8f0;font-size:14px;font-family:inherit;transition:border-color .2s}
+input:focus,textarea:focus{outline:none;border-color:#60a5fa;box-shadow:0 0 0 3px rgba(96,165,250,0.1)}
+input::placeholder,textarea::placeholder{color:#475569}
+textarea{resize:vertical;min-height:60px}
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-inner-spin-button{opacity:1}
+.btn{border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+.btn-primary{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff}
+.btn-primary:hover{opacity:0.9;transform:translateY(-1px)}
+.btn-danger{background:#ef4444;color:#fff}
+.btn-danger:hover{background:#dc2626}
+.btn-ghost{background:transparent;color:#94a3b8;border:1px solid #334155}
+.btn-ghost:hover{background:#334155}
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+.btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.output-panel{background:#1e293b;border-radius:12px;border:1px solid #334155;overflow:hidden}
+.output-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #334155}
+.output-header h2{font-size:1.05em;color:#94a3b8;font-weight:600}
+.legend{display:flex;align-items:center;gap:8px;font-size:0.75em;color:#64748b}
+.legend-bar{width:120px;height:12px;border-radius:6px;background:linear-gradient(90deg,#ffffff,#fecaca,#f87171,#dc2626);border:1px solid #475569}
+.output-body{padding:20px;min-height:120px;position:relative}
+#output-area{background:#fafafa;border-radius:8px;padding:16px 20px;min-height:80px;line-height:2;font-size:15px;white-space:pre-wrap;word-wrap:break-word;color:#1e293b;font-family:'Courier New',Consolas,monospace}
+#output-area:empty::before{content:'Output will appear here...';color:#94a3b8;font-style:italic;font-family:'Segoe UI',system-ui,sans-serif}
+.token-span{display:inline;padding:2px 0;border-radius:3px;cursor:pointer;position:relative;transition:outline .15s,box-shadow .15s}
+.token-span:hover{outline:2px solid #3b82f6;box-shadow:0 0 8px rgba(59,130,246,0.3);z-index:10;border-radius:3px}
+.stats-bar{display:flex;gap:16px;padding:12px 20px;border-top:1px solid #334155;font-size:0.8em;color:#64748b;flex-wrap:wrap}
+.stat-item{display:flex;align-items:center;gap:4px}
+.stat-value{color:#e2e8f0;font-weight:600}
+#error-msg{color:#f87171;background:rgba(248,113,113,0.1);padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:0.9em;display:none;border:1px solid rgba(248,113,113,0.2)}
+#error-msg.visible{display:block}
+.tooltip{display:none;position:fixed;background:#1e293b;border:1px solid #475569;border-radius:10px;padding:0;z-index:10000;min-width:300px;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.5);font-size:13px;overflow:hidden}
+.tooltip.visible{display:block}
+.tooltip-head{padding:12px 16px;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center}
+.tooltip-head .token-display{font-family:'Courier New',monospace;background:#0f172a;padding:3px 8px;border-radius:4px;font-size:13px;color:#fbbf24;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tooltip-head .entropy-display{font-size:0.85em;color:#94a3b8}
+.tooltip-head .entropy-display b{color:#f87171}
+.tooltip-body{padding:8px 0;max-height:320px;overflow-y:auto}
+.tooltip-row{display:flex;align-items:center;gap:8px;padding:4px 16px;transition:background .1s}
+.tooltip-row:hover{background:#334155}
+.tooltip-row .rank{color:#64748b;font-size:0.8em;min-width:20px;text-align:right}
+.tooltip-row .tk{font-family:'Courier New',monospace;min-width:100px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#e2e8f0;background:#0f172a;padding:2px 6px;border-radius:3px}
+.tooltip-row .bar-wrap{flex:1;height:10px;background:#0f172a;border-radius:5px;overflow:hidden;min-width:60px}
+.tooltip-row .bar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,#3b82f6,#8b5cf6);transition:width .2s}
+.tooltip-row .prob{min-width:52px;text-align:right;font-size:0.8em;color:#94a3b8;font-variant-numeric:tabular-nums}
+.tooltip-row.selected .tk{color:#fbbf24;border:1px solid #fbbf24}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cursor-blink{display:inline-block;width:2px;height:1em;background:#3b82f6;animation:blink 1s step-end infinite;vertical-align:text-bottom;margin-left:1px}
+@keyframes blink{50%{opacity:0}}
+@media(max-width:640px){.container{padding:12px}.form-row{flex-direction:column}.form-group{min-width:100%}.tooltip{min-width:260px;max-width:calc(100vw - 24px)}}
+.token-whitespace{opacity:0.5;font-size:0.7em;color:#94a3b8}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🔬 LLM Token Entropy Visualizer</h1>
+  <p class="subtitle">Visualize model uncertainty at each token • Red = high entropy • White = low entropy</p>
+
+  <!-- API Settings -->
+  <div class="card">
+    <div class="card-header" onclick="togglePanel('settings-body','settings-toggle')">
+      <h2>⚙️ API Settings</h2>
+      <span class="toggle" id="settings-toggle">▼</span>
+    </div>
+    <div class="card-body" id="settings-body">
+      <div class="form-row">
+        <div class="form-group" style="flex:2">
+          <label>Base URL</label>
+          <input type="text" id="base-url" value="https://api.openai.com/v1" placeholder="https://api.openai.com/v1">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>API Key</label>
+          <input type="password" id="api-key" placeholder="sk-...">
+        </div>
+        <div class="form-group">
+          <label>Model Name</label>
+          <input type="text" id="model-name" value="gpt-4o-mini" placeholder="gpt-4o-mini">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Top Logprobs (1-20)</label>
+          <input type="number" id="top-logprobs" value="20" min="1" max="20">
+        </div>
+        <div class="form-group">
+          <label>Temperature</label>
+          <input type="number" id="temperature" value="1" min="0" max="2" step="0.05">
+        </div>
+        <div class="form-group">
+          <label>Max Tokens (0=auto)</label>
+          <input type="number" id="max-tokens" value="0" min="0" max="128000">
+        </div>
+        <div class="form-group">
+          <label>Entropy Scale (nats)</label>
+          <input type="number" id="max-entropy" value="4" min="0.5" max="20" step="0.5">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prompt -->
+  <div class="card">
+    <h2 style="color:#94a3b8;font-size:1.05em;font-weight:600;margin-bottom:12px">💬 Prompt</h2>
+    <div class="form-group">
+      <label>System Prompt (optional)</label>
+      <textarea id="system-prompt" rows="2" placeholder="You are a helpful assistant."></textarea>
+    </div>
+    <div class="form-group" style="margin-top:12px">
+      <label>User Prompt</label>
+      <textarea id="user-prompt" rows="4" placeholder="Explain quantum entanglement in simple terms."></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="clearAll()">Clear</button>
+      <button class="btn btn-danger" id="stop-btn" onclick="stopGeneration()" style="display:none">
+        ■ Stop
+      </button>
+      <button class="btn btn-primary" id="gen-btn" onclick="generate()">
+        ▶ Generate
+      </button>
+    </div>
+  </div>
+
+  <!-- Output -->
+  <div class="output-panel">
+    <div class="output-header">
+      <h2>📊 Output</h2>
+      <div class="legend">
+        <span>Low H</span>
+        <div class="legend-bar"></div>
+        <span>High H</span>
+      </div>
+    </div>
+    <div class="output-body">
+      <div id="error-msg"></div>
+      <div id="output-area"></div>
+    </div>
+    <div class="stats-bar" id="stats-bar" style="display:none">
+      <div class="stat-item">Tokens: <span class="stat-value" id="stat-tokens">0</span></div>
+      <div class="stat-item">Avg Entropy: <span class="stat-value" id="stat-avg">0</span> nats</div>
+      <div class="stat-item">Max Entropy: <span class="stat-value" id="stat-max">0</span> nats</div>
+      <div class="stat-item">Min Entropy: <span class="stat-value" id="stat-min">0</span> nats</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div id="tooltip" class="tooltip"></div>
+
+<script>
+// ========== STATE ==========
+let tokenDataList = [];
+let isGenerating = false;
+let abortController = null;
+
+// ========== SETTINGS ==========
+function getSettings() {
+  return {
+    baseUrl: document.getElementById('base-url').value.replace(/\/+$/, ''),
+    apiKey: document.getElementById('api-key').value.trim(),
+    modelName: document.getElementById('model-name').value.trim(),
+    topLogprobs: Math.min(20, Math.max(1, parseInt(document.getElementById('top-logprobs').value) || 20)),
+    temperature: parseFloat(document.getElementById('temperature').value) || 1,
+    maxTokens: parseInt(document.getElementById('max-tokens').value) || 0,
+    maxEntropy: parseFloat(document.getElementById('max-entropy').value) || 4,
+    systemPrompt: document.getElementById('system-prompt').value.trim(),
+    userPrompt: document.getElementById('user-prompt').value.trim()
+  };
+}
+
+function saveSettings() {
+  try {
+    const s = getSettings();
+    localStorage.setItem('entropy-viz', JSON.stringify(s));
+  } catch(e) {}
+}
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem('entropy-viz');
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (s.baseUrl) document.getElementById('base-url').value = s.baseUrl;
+    if (s.apiKey) document.getElementById('api-key').value = s.apiKey;
+    if (s.modelName) document.getElementById('model-name').value = s.modelName;
+    if (s.topLogprobs) document.getElementById('top-logprobs').value = s.topLogprobs;
+    if (s.temperature !== undefined) document.getElementById('temperature').value = s.temperature;
+    if (s.maxTokens !== undefined) document.getElementById('max-tokens').value = s.maxTokens;
+    if (s.maxEntropy) document.getElementById('max-entropy').value = s.maxEntropy;
+    if (s.systemPrompt) document.getElementById('system-prompt').value = s.systemPrompt;
+    if (s.userPrompt) document.getElementById('user-prompt').value = s.userPrompt;
+  } catch(e) {}
+}
+
+// ========== PANEL TOGGLE ==========
+function togglePanel(bodyId, toggleId) {
+  const body = document.getElementById(bodyId);
+  const toggle = document.getElementById(toggleId);
+  body.classList.toggle('hidden');
+  toggle.classList.toggle('collapsed');
+}
+
+// ========== ENTROPY ==========
+function calculateEntropy(topLogprobs) {
+  if (!topLogprobs || topLogprobs.length === 0) return 0;
+  let entropy = 0;
+  for (const item of topLogprobs) {
+    const p = Math.exp(item.logprob);
+    if (p > 0 && p <= 1) {
+      entropy -= p * item.logprob;
+    }
+  }
+  return Math.max(0, entropy);
+}
+
+// ========== COLOR ==========
+function entropyToColor(entropy, maxEntropy) {
+  const t = Math.min(Math.max(entropy / maxEntropy, 0), 1);
+  // white → light red → red
+  const r = 255;
+  const g = Math.round(255 * (1 - t));
+  const b = Math.round(255 * (1 - t));
+  return `rgb(${r},${g},${b})`;
+}
+
+function getTextColor(entropy, maxEntropy) {
+  const t = Math.min(entropy / maxEntropy, 1);
+  return t > 0.55 ? '#ffffff' : '#1e293b';
+}
+
+// ========== DISPLAY TOKEN ==========
+function renderToken(tokenInfo, maxEntropy) {
+  const topLogprobs = tokenInfo.top_logprobs || [];
+  const entropy = calculateEntropy(topLogprobs);
+  const bgColor = entropyToColor(entropy, maxEntropy);
+  const textColor = getTextColor(entropy, maxEntropy);
+  const prob = Math.exp(tokenInfo.logprob) * 100;
+
+  const data = {
+    token: tokenInfo.token,
+    logprob: tokenInfo.logprob,
+    prob: prob,
+    entropy: entropy,
+    topLogprobs: topLogprobs
+  };
+  tokenDataList.push(data);
+
+  const span = document.createElement('span');
+  span.className = 'token-span';
+  span.textContent = tokenInfo.token;
+  span.style.backgroundColor = bgColor;
+  span.style.color = textColor;
+
+  const idx = tokenDataList.length - 1;
+  span.addEventListener('mouseenter', (e) => showTooltip(e, data));
+  span.addEventListener('mousemove', moveTooltip);
+  span.addEventListener('mouseleave', hideTooltip);
+
+  document.getElementById('output-area').appendChild(span);
+  updateStats();
+}
+
+// ========== TOOLTIP ==========
+function showTooltip(e, data) {
+  const tip = document.getElementById('tooltip');
+
+  // Header
+  let displayToken = data.token;
+  // Make whitespace visible
+  displayToken = displayToken
+    .replace(/\n/g, '↵\\n')
+    .replace(/\t/g, '→\\t')
+    .replace(/^ /, '·');
+  if (displayToken === ' ') displayToken = '·(space)';
+  if (displayToken === '') displayToken = '(empty)';
+
+  let html = `<div class="tooltip-head">
+    <span class="token-display">${escapeHtml(displayToken)}</span>
+    <span class="entropy-display">H = <b>${data.entropy.toFixed(3)}</b> nats &nbsp;|&nbsp; P = ${data.prob.toFixed(1)}%</span>
+  </div>`;
+
+  // Body - top alternatives
+  html += `<div class="tooltip-body">`;
+  const sorted = [...data.topLogprobs].sort((a, b) => b.logprob - a.logprob);
+  const maxProb = sorted.length > 0 ? Math.exp(sorted[0].logprob) : 1;
+
+  sorted.forEach((item, i) => {
+    const p = Math.exp(item.logprob);
+    const pct = (p * 100).toFixed(1);
+    const barWidth = (p / maxProb * 100).toFixed(1);
+    const isSelected = item.token === data.token;
+    let tk = item.token
+      .replace(/\n/g, '↵')
+      .replace(/\t/g, '→')
+      .replace(/^ /, '·');
+    if (tk === ' ') tk = '·';
+    if (tk === '') tk = '∅';
+
+    html += `<div class="tooltip-row${isSelected ? ' selected' : ''}">
+      <span class="rank">${i + 1}</span>
+      <span class="tk">${escapeHtml(tk)}</span>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${barWidth}%"></div></div>
+      <span class="prob">${pct}%</span>
+    </div>`;
+  });
+
+  // Show remaining probability
+  const totalP = sorted.reduce((s, item) => s + Math.exp(item.logprob), 0);
+  if (totalP < 0.999) {
+    const rest = ((1 - totalP) * 100).toFixed(1);
+    html += `<div class="tooltip-row">
+      <span class="rank"></span>
+      <span class="tk" style="color:#64748b;background:none">… others</span>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${((1-totalP)/maxProb*100).toFixed(1)}%;opacity:0.4"></div></div>
+      <span class="prob">${rest}%</span>
+    </div>`;
+  }
+
+  html += `</div>`;
+  tip.innerHTML = html;
+  tip.classList.add('visible');
+  positionTooltip(e);
+}
+
+function moveTooltip(e) {
+  positionTooltip(e);
+}
+
+function positionTooltip(e) {
+  const tip = document.getElementById('tooltip');
+  const rect = tip.getBoundingClientRect();
+  const pad = 12;
+
+  let left = e.clientX + pad;
+  let top = e.clientY + pad;
+
+  if (left + rect.width > window.innerWidth - pad) {
+    left = e.clientX - rect.width - pad;
+  }
+  if (top + rect.height > window.innerHeight - pad) {
+    top = e.clientY - rect.height - pad;
+  }
+  if (left < pad) left = pad;
+  if (top < pad) top = pad;
+
+  tip.style.left = left + 'px';
+  tip.style.top = top + 'px';
+}
+
+function hideTooltip() {
+  document.getElementById('tooltip').classList.remove('visible');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ========== STATS ==========
+function updateStats() {
+  if (tokenDataList.length === 0) {
+    document.getElementById('stats-bar').style.display = 'none';
+    return;
+  }
+  document.getElementById('stats-bar').style.display = 'flex';
+
+  const entropies = tokenDataList.map(d => d.entropy);
+  const avg = entropies.reduce((a, b) => a + b, 0) / entropies.length;
+  const max = Math.max(...entropies);
+  const min = Math.min(...entropies);
+
+  document.getElementById('stat-tokens').textContent = tokenDataList.length;
+  document.getElementById('stat-avg').textContent = avg.toFixed(3);
+  document.getElementById('stat-max').textContent = max.toFixed(3);
+  document.getElementById('stat-min').textContent = min.toFixed(3);
+}
+
+// ========== GENERATE ==========
+async function generate() {
+  const settings = getSettings();
+  saveSettings();
+
+  if (!settings.userPrompt) {
+    showError('Please enter a user prompt.');
+    return;
+  }
+  if (!settings.apiKey) {
+    showError('Please enter an API key.');
+    return;
+  }
+
+  clearOutput();
+  setGenerating(true);
+
+  abortController = new AbortController();
+
+  try {
+    const messages = [];
+    if (settings.systemPrompt) {
+      messages.push({ role: 'system', content: settings.systemPrompt });
+    }
+    messages.push({ role: 'user', content: settings.userPrompt });
+
+    const body = {
+      model: settings.modelName,
+      messages: messages,
+      logprobs: true,
+      top_logprobs: settings.topLogprobs,
+      stream: true,
+      temperature: settings.temperature
+    };
+    if (settings.maxTokens > 0) {
+      body.max_tokens = settings.maxTokens;
+    }
+
+    const response = await fetch(`${settings.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${settings.apiKey}`
+      },
+      body: JSON.stringify(body),
+      signal: abortController.signal
+    });
+
+    if (!response.ok) {
+      let errText = '';
+      try { errText = await response.text(); } catch(e) {}
+      if (response.status === 401) throw new Error('Authentication failed. Check your API key.');
+      if (response.status === 404) throw new Error('Endpoint not found. Check your Base URL and model name.');
+      if (response.status === 429) throw new Error('Rate limited. Please wait and try again.');
+      throw new Error(`API Error ${response.status}: ${errText.slice(0, 500)}`);
+    }
+
+    // Add blinking cursor
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor-blink';
+    cursor.id = 'gen-cursor';
+    document.getElementById('output-area').appendChild(cursor);
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data:')) continue;
+
+        const data = trimmed.slice(trimmed.indexOf(':') + 1).trim();
+        if (data === '[DONE]') {
+          setGenerating(false);
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(data);
+          const choice = parsed.choices && parsed.choices[0];
+          if (!choice) continue;
+
+          if (choice.logprobs && choice.logprobs.content) {
+            for (const tokenInfo of choice.logprobs.content) {
+              // Remove cursor, add token, re-add cursor
+              const cur = document.getElementById('gen-cursor');
+              if (cur) cur.remove();
+              renderToken(tokenInfo, settings.maxEntropy);
+              const newCur = document.createElement('span');
+              newCur.className = 'cursor-blink';
+              newCur.id = 'gen-cursor';
+              document.getElementById('output-area').appendChild(newCur);
+            }
+          }
+
+          if (choice.finish_reason) {
+            setGenerating(false);
+            return;
+          }
+        } catch (e) {
+          // partial JSON, skip
+        }
+      }
+    }
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      // User stopped
+    } else {
+      showError(error.message);
+    }
+  } finally {
+    setGenerating(false);
+    const cur = document.getElementById('gen-cursor');
+    if (cur) cur.remove();
+  }
+}
+
+function stopGeneration() {
+  if (abortController) {
+    abortController.abort();
+    abortController = null;
+  }
+  setGenerating(false);
+}
+
+function setGenerating(val) {
+  isGenerating = val;
+  const genBtn = document.getElementById('gen-btn');
+  const stopBtn = document.getElementById('stop-btn');
+
+  if (val) {
+    genBtn.disabled = true;
+    genBtn.innerHTML = '<span class="spinner"></span> Generating…';
+    stopBtn.style.display = 'inline-flex';
+  } else {
+    genBtn.disabled = false;
+    genBtn.innerHTML = '▶ Generate';
+    stopBtn.style.display = 'none';
+    const cur = document.getElementById('gen-cursor');
+    if (cur) cur.remove();
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = '⚠ ' + msg;
+  el.classList.add('visible');
+}
+
+function clearOutput() {
+  tokenDataList = [];
+  document.getElementById('output-area').innerHTML = '';
+  document.getElementById('error-msg').textContent = '';
+  document.getElementById('error-msg').classList.remove('visible');
+  document.getElementById('stats-bar').style.display = 'none';
+}
+
+function clearAll() {
+  clearOutput();
+}
+
+// ========== KEYBOARD ==========
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    if (!isGenerating) generate();
+  }
+  if (e.key === 'Escape' && isGenerating) {
+    stopGeneration();
+  }
+});
+
+// ========== INIT ==========
+loadSettings();
+</script>
+</body>
+</html>
