@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duan Yu</title>
+
+    <!-- ============================================================ -->
+    <!--  样式表：如果你以后想换风格，只改下面这部分就够了            -->
+    <!--  用到的 CSS 变量（:root 里的 --xxx）可以在一个地方统一切换   -->
+    <!-- ============================================================ -->
+    <style>
+        /* ---------- 全局变量：改颜色、字体就在这里 ---------- */
+        :root {
+            --bg:           #fafafa;          /* 页面背景色        */
+            --text:         #333333;          /* 正文颜色          */
+            --text-light:   #777777;          /* 次要文字颜色      */
+            --accent:       #1a1a2e;          /* 强调色 / 标题色   */
+            --card-bg:      #ffffff;          /* 卡片背景          */
+            --card-shadow:  0 2px 12px rgba(0, 0, 0, 0.06);  /* 卡片阴影 */
+            --card-hover:   0 4px 20px rgba(0, 0, 0, 0.10);  /* 悬停阴影 */
+            --radius:       12px;             /* 圆角              */
+            --max-width:    720px;            /* 内容最大宽度      */
+        }
+
+        /* ---------- 基础重置 ---------- */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                         "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+                         sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.75;
+            /* 让页面内容垂直居中 */
+            display: flex;
+            justify-content: center;
+            padding: 48px 20px 80px;
+        }
+
+        /* ---------- 主容器 ---------- */
+        .container {
+            width: 100%;
+            max-width: var(--max-width);
+        }
+
+        /* ============================================================
+           PART 1: 头部 —— 个人介绍
+           改名字、一句话简介、头像、社交链接都在这里
+           ============================================================ */
+        .header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        /* ---- 头像（可选）。不需要的话把 .avatar 整块删掉即可 ---- */
+        .avatar {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 20px;
+            /* 如果你想用纯色圆形代替图片，可换成 background + 文字 */
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 0.02em;
+            margin-bottom: 8px;
+        }
+
+        /* 一句话简介 */
+        .header .tagline {
+            font-size: 1rem;
+            color: var(--text-light);
+            margin-bottom: 24px;
+        }
+
+        /* ---- 社交链接 ---- */
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .social-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+
+        .social-links a:hover {
+            color: var(--accent);
+        }
+
+        /* ============================================================
+           PART 2: 关于我 —— 更详细的自我介绍
+           替换成你自己的经历、技能、兴趣爱好
+           ============================================================ */
+        .about {
+            margin-bottom: 56px;
+        }
+
+        .about h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .about p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+
+        /* ============================================================
+           PART 3: 导航卡片 —— 跳转到你 github.io 下的其他项目 / 子域名
+           每张卡片 = 一个 .nav-card
+           想添加新导航项？复制一个 .nav-card 即可
+           ============================================================ */
+        .nav-section {
+            margin-bottom: 56px;
+        }
+
+        .nav-section h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .nav-grid {
+            display: grid;
+            /* 自动适应列宽：最小 200px，空间够就多列 */
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        /* 单张导航卡片 */
+        .nav-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 24px 20px;
+            box-shadow: var(--card-shadow);
+            text-decoration: none;          /* 因为整张卡是 <a> */
+            color: var(--text);
+            transition: box-shadow 0.25s, transform 0.25s;
+            display: block;
+        }
+
+        .nav-card:hover {
+            box-shadow: var(--card-hover);
+            transform: translateY(-2px);
+        }
+
+        /* 卡片里的 emoji / 图标 */
+        .nav-card .card-icon {
+            font-size: 1.6rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .nav-card .card-title {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .nav-card .card-desc {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        /* 状态标签：即将上线 / 维护中 等 */
+        .nav-card .card-badge {
+            display: inline-block;
+            font-size: 0.72rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #f0f0f0;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        /* ============================================================
+           PART 4: 页脚
+           ============================================================ */
+        .footer {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #ccc;
+        }
+
+        .footer a {
+            color: #bbb;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: var(--accent);
+        }
+
+        /* ---------- 响应式：手机上看也舒服 ---------- */
+        @media (max-width: 480px) {
+            body { padding: 32px 16px 60px; }
+            .header h1 { font-size: 1.6rem; }
+            .nav-grid { grid-template-columns: 1fr; }  /* 手机上一列 */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- ========================================================
+             PART 1: 头部 —— 你的名字 & 一句话简介
+             把下面的内容换成你自己的
+        ============================================================ -->
+        <header class="header">
+
+            <!-- 头像（可选）。想用自己的照片就把 src 换成图片地址，
+                 不想用头像就直接删掉这行 -->
+            <img class="avatar"
+                 src="https://via.placeholder.com/96/1a1a2e/ffffff?text=D"
+                 alt="头像"
+                 loading="lazy">
+
+            <!-- 你的名字 -->
+            <h1>Duan Yu</h1>
+
+            <!-- 一句话介绍自己 -->
+            <p class="tagline">开发者 · 持续学习中 · 用代码构建有趣的东西</p>
+
+            <!-- 社交链接：GitHub / 邮箱 / 博客 等。按需增删 -->
+            <div class="social-links">
+                <!-- 换成你自己的 GitHub 用户名 -->
+                <a href="https://github.com/duanyu" target="_blank" rel="noopener">GitHub</a>
+                <!-- 邮箱 -->
+                <a href="mailto:duanyu@example.com">Email</a>
+                <!-- 博客（如果有的话，取消注释即可）
+                <a href="https://duanyu.github.io/blog" target="_blank">Blog</a>
+                -->
+            </div>
+
+        </header>
+
+        <!-- ========================================================
+             PART 2: 关于我 —— 更详细的介绍
+             随意写，段落格式，想加什么加什么
+        ============================================================ -->
+        <section class="about">
+            <h2>👋 关于我</h2>
+            <p>
+                你好！我是Duan Yu，一名AI算法工程师。
+            </p>
+        </section>
+
+        <!-- ========================================================
+             PART 3: 导航卡片 —— 你的其他项目 / 子站
+             每张卡片是一个 <a> 标签，点击跳转
+             添加新项目：复制一个 .nav-card 块，改链接和文字即可
+        ============================================================ -->
+        <section class="nav-section">
+            <h2>🗂️ 导航</h2>
+
+            <div class="nav-grid">
+
+                <!-- ---- 示例卡片 4：占位用，提示怎么加新卡片 ---- -->
+                <!--
+                <a class="nav-card" href="https://duanyu.github.io/你的项目路径" target="_blank">
+                    <span class="card-icon">🔧</span>
+                    <div class="card-title">新项目</div>
+                    <div class="card-desc">一句话描述这个项目</div>
+                </a>
+                -->
+
+            </div>
+        </section>
+
+        <!-- ========================================================
+             PART 4: 页脚
+        ============================================================ -->
+        <footer class="footer">
+            <p>
+                © 2026 Duan Yu ·
+                Powered by
+                <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a>
+            </p>
+        </footer>
+
+    </div><!-- .container -->
+
+</body>
+</html>
