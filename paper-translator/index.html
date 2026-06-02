@@ -46,13 +46,14 @@
         .top-bar {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             margin-bottom: 40px;
-            flex-wrap: wrap;
-            gap: 12px;
+            position: relative;
         }
 
         .back-link {
+            position: absolute;
+            left: 0;
             color: var(--text-light);
             text-decoration: none;
             font-size: 0.9rem;
@@ -261,7 +262,8 @@
         /* ---------- 响应式 ---------- */
         @media (max-width: 600px) {
             body { padding: 24px 14px 60px; }
-            .top-bar { flex-direction: column; align-items: flex-start; }
+            .top-bar { flex-direction: column; align-items: center; }
+            .back-link { position: static; margin-bottom: 8px; }
             .site-title { font-size: 1.25rem; }
             .paper-card { padding: 18px; }
             .preview-modal { height: 95vh; max-width: 100%; }
