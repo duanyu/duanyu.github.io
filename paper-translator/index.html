@@ -20,8 +20,7 @@
             --card-hover:   0 4px 20px rgba(0, 0, 0, 0.10);
             --radius:       12px;
             --max-width:    880px;
-            --tag-bg:       #eef2ff;
-            --tag-color:    #4f46e5;
+
         }
 
         /* ---------- 基础重置 ---------- */
@@ -140,27 +139,6 @@
             margin-bottom: 6px;
         }
 
-        .paper-card .paper-meta {
-            font-size: 0.85rem;
-            color: var(--text-light);
-            margin-bottom: 10px;
-        }
-
-        /* 关键词标签 */
-        .paper-card .paper-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-bottom: 14px;
-        }
-        .paper-card .paper-tags .tag {
-            display: inline-block;
-            font-size: 0.75rem;
-            padding: 2px 10px;
-            border-radius: 10px;
-            background: var(--tag-bg);
-            color: var(--tag-color);
-        }
 
         /* 操作按钮 */
         .paper-card .paper-actions {
@@ -374,47 +352,18 @@
     //  论文数据（新增论文只需在此数组中添加对象即可）
     //  字段说明：
     //    - filename:   pdf/ 目录下的文件名
-    //    - title:      { zh, en } 双语标题
-    //    - authors:    作者
-    //    - keywords:   { zh, en } 双语关键词数组
-    //    - abstract:   { zh, en } 双语摘要（可选）
+    //    - title:      论文标题（英文）
     // =============================================================
     const papers = [
         {
-            id: 1,
             filename: "DeepSeekMath-V2: Towards Self-Verifiable Mathematical Reasoning.pdf",
-            title: {
-                zh: "DeepSeekMath-V2：面向自验证数学推理",
-                en: "DeepSeekMath-V2: Towards Self-Verifiable Mathematical Reasoning"
-            },
-            authors: "Zhihong Shao, Peiyi Wang, et al.",
-            keywords: {
-                zh: ["数学推理", "自验证", "大语言模型", "强化学习", "DeepSeek"],
-                en: ["Mathematical Reasoning", "Self-Verification", "LLM", "Reinforcement Learning", "DeepSeek"]
-            },
-            abstract: {
-                zh: "本文提出了 DeepSeekMath-V2，一个面向自验证数学推理的大语言模型，通过强化学习与验证机制提升数学推理能力。",
-                en: "This paper proposes DeepSeekMath-V2, a large language model towards self-verifiable mathematical reasoning, improving mathematical reasoning through reinforcement learning and verification mechanisms."
-            }
+            title: "DeepSeekMath-V2: Towards Self-Verifiable Mathematical Reasoning"
         }
         // ---- 新增论文模板：复制以下代码块，填入信息即可 ----
         /*
         {
-            id: 2,
             filename: "your-paper.pdf",
-            title: {
-                zh: "论文中文标题",
-                en: "Paper English Title"
-            },
-            authors: "Author Names",
-            keywords: {
-                zh: ["关键词1", "关键词2"],
-                en: ["keyword1", "keyword2"]
-            },
-            abstract: {
-                zh: "中文摘要...",
-                en: "English abstract..."
-            }
+            title: "Paper Title"
         },
         */
     ];
@@ -431,17 +380,7 @@
         if (!query) return papers;
 
         return papers.filter(p => {
-            // 搜索标题（中英文）
-            if (p.title.zh.toLowerCase().includes(query)) return true;
-            if (p.title.en.toLowerCase().includes(query)) return true;
-            // 搜索作者
-            if (p.authors.toLowerCase().includes(query)) return true;
-            // 搜索关键词（中英文）
-            if (p.keywords.zh.some(k => k.toLowerCase().includes(query))) return true;
-            if (p.keywords.en.some(k => k.toLowerCase().includes(query))) return true;
-            // 搜索摘要
-            if (p.abstract.zh.toLowerCase().includes(query)) return true;
-            if (p.abstract.en.toLowerCase().includes(query)) return true;
+            if (p.title.toLowerCase().includes(query)) return true;
             return false;
         });
     }
@@ -465,17 +404,12 @@
 
         emptyEl.style.display = "none";
         listEl.innerHTML = filtered.map(p => {
-            const title = p.title.en;
-            const keywords = p.keywords.zh;
+            const title = p.title;
             const pdfPath = "pdf/" + encodeURIComponent(p.filename);
 
             return `
                 <div class="paper-card">
                     <div class="paper-title">${escapeHtml(title)}</div>
-                    <div class="paper-meta">${escapeHtml(p.authors)}</div>
-                    <div class="paper-tags">
-                        ${keywords.map(k => `<span class="tag">${escapeHtml(k)}</span>`).join("")}
-                    </div>
                     <div class="paper-actions">
                         <button class="btn btn-preview" onclick='openPreview("${escapeAttr(pdfPath)}", "${escapeAttr(title)}")'>
                             👁 预览
