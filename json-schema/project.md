@@ -1,0 +1,56 @@
+## 基本功能
+
+输入：一段json结构的示例，纯文本的格式
+
+输出：提示词。一个用来生成json schema，一个用来生成pydantic类代码（选择生成哪个，取决于用户的选择）
+
+提示词1：生成json schema
+根据这个json结构，生成json schema，其中false/true需要表示为False/True：
+{json_data}
+
+提示词2：生成pydantic
+根据这个json结构，生成pydantic的定义代码：
+{json_data}
+
+## 界面设计
+
+整体而言，页面分为上下结构。
+
+上面部分占30%，主要放一些固定的、与使用json schema息息相关的代码片段：
+
+代码片段1（openai client使用json schema）
+```python
+response_format = {
+    'type': 'json_schema',
+    'json_schema':{
+        'name': 'json_schema',
+        'schema': json_schema
+    }
+}
+```
+
+代码片段2（openai client使用pydantic）
+```python
+response_format = {
+    'type': 'json_schema',
+    'json_schema':{
+        'name': 'json_schema',
+        'schema': pydantic_class.model_json_schema()
+    }
+}
+```
+
+下半部分占70%，又分为左右结构。
+左侧放输入（即文本格式的json示例），下方放两个按钮“Json Schema”、“Pydantic”
+右侧放拼接后的prompt结果。
+
+整个页面左上角放一个回到duanyu.github.io主页的按钮。
+
+
+## 页面的风格
+
+极简风、苹果产品风格。
+
+## 数据统计
+
+我想知道按钮被点击的次数，把这个放到页面的某个地方。

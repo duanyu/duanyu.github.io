@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Schema 提示词生成器</title>
+
+    <!-- ============================================================ -->
+    <!--  样式表：极简苹果风格，所有变量集中在 :root 里管理           -->
+    <!-- ============================================================ -->
+    <style>
+        /* ---------- 全局变量 ---------- */
+        :root {
+            --bg:           #f5f5f7;
+            --text:         #1d1d1f;
+            --text-secondary: #6e6e73;
+            --accent:       #0071e3;
+            --accent-hover: #0077ed;
+            --card-bg:      #ffffff;
+            --card-shadow:  0 2px 12px rgba(0, 0, 0, 0.04);
+            --border:       #d2d2d7;
+            --code-bg:      #f5f5f7;
+            --radius:       12px;
+            --radius-sm:    8px;
+            --max-width:    1100px;
+            --font-mono:    "SF Mono", "Fira Code", "Cascadia Code", "Consolas", "Monaco", monospace;
+        }
+
+        /* ---------- 基础重置 ---------- */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                         "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+                         sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 24px 20px 60px;
+        }
+
+        /* ---------- 主容器 ---------- */
+        .container {
+            width: 100%;
+            max-width: var(--max-width);
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        /* ============================================================
+           PART 0: 返回主页按钮 —— 左上角固定
+           ============================================================ */
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 24px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            background: var(--card-bg);
+            padding: 8px 16px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            transition: background 0.2s, transform 0.15s;
+            z-index: 10;
+        }
+
+        .back-link:hover {
+            background: #f0f0f5;
+            transform: translateX(-2px);
+        }
+
+        /* ============================================================
+           PART 1: 代码片段展示区 —— 约占 30%
+           两个并排卡片，展示 OpenAI Client 的用法
+           ============================================================ */
+        .snippets {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .snippet-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+
+        .snippet-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        /* 代码片段标题栏 */
+        .snippet-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            background: #fafafa;
+        }
+
+        .snippet-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .snippet-badge {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            background: #f0f0f5;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* 代码内容区 */
+        .snippet-body {
+            padding: 16px 18px;
+        }
+
+        .snippet-body pre {
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            line-height: 1.7;
+            color: var(--text);
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* 复制按钮 */
+        .copy-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+
+        .copy-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .copy-btn.copied {
+            background: #34c759;
+            border-color: #34c759;
+            color: #fff;
+        }
+
+        /* ============================================================
+           PART 2: 主操作区 —— 约占 70%
+           左侧输入 JSON + 按钮，右侧展示拼接后的提示词
+           ============================================================ */
+        .main-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            flex: 1;
+            min-height: 420px;
+        }
+
+        /* ---- 左侧：输入面板 ---- */
+        .input-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .panel-label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .panel-label .icon {
+            font-size: 1.1rem;
+        }
+
+        /* JSON 输入框 */
+        .json-textarea {
+            flex: 1;
+            width: 100%;
+            min-height: 260px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.65;
+            color: var(--text);
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .json-textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+        }
+
+        .json-textarea::placeholder {
+            color: #c7c7cc;
+        }
+
+        /* 按钮组 */
+        .btn-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .generate-btn {
+            flex: 1;
+            padding: 12px 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            letter-spacing: 0.01em;
+        }
+
+        /* Json Schema 按钮 —— 主色调 */
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        /* Pydantic 按钮 —— 次要色调 */
+        .btn-secondary {
+            background: var(--card-bg);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+
+        .btn-secondary:hover {
+            background: #e8f0fe;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.15);
+        }
+
+        .btn-secondary:active {
+            transform: translateY(0);
+        }
+
+        /* ---- 右侧：输出面板 ---- */
+        .output-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* 输出结果区域 */
+        .output-area {
+            flex: 1;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.65;
+            color: var(--text);
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            min-height: 260px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            overflow-y: auto;
+        }
+
+        /* 输出区占位文字 */
+        .output-placeholder {
+            color: #c7c7cc;
+            font-style: normal;
+        }
+
+        /* 输出区工具条 */
+        .output-toolbar {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        /* ============================================================
+           PART 3: 统计信息区
+           ============================================================ */
+        .stats-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 32px;
+            padding: 14px 20px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border);
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-item .stat-icon {
+            font-size: 1rem;
+        }
+
+        .stat-count {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 1rem;
+            min-width: 28px;
+            text-align: center;
+        }
+
+        .stat-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--border);
+        }
+
+        /* ---------- 响应式：窄屏上下堆叠 ---------- */
+        @media (max-width: 768px) {
+            .snippets {
+                grid-template-columns: 1fr;
+            }
+
+            .main-area {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+
+            .json-textarea {
+                min-height: 180px;
+            }
+
+            .output-area {
+                min-height: 180px;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .stat-divider {
+                width: 60px;
+                height: 1px;
+            }
+
+            .back-link {
+                top: 12px;
+                left: 12px;
+                font-size: 0.82rem;
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+         PART 0: 返回主页按钮
+    ============================================================ -->
+    <a class="back-link" href="../" title="返回 duanyu.github.io">
+        ← 返回主页
+    </a>
+
+    <!-- ============================================================
+         主容器
+    ============================================================ -->
+    <div class="container">
+
+        <!-- ============================================================
+             PART 1: 代码片段展示 —— 固定参考代码
+             两个卡片并排：OpenAI Client 使用 JSON Schema / 使用 Pydantic
+        ============================================================ -->
+        <section class="snippets">
+            <!-- 代码片段1：OpenAI Client 使用 JSON Schema -->
+            <div class="snippet-card">
+                <div class="snippet-header">
+                    <span class="snippet-label">OpenAI Client 使用 JSON Schema</span>
+                    <span class="snippet-badge">Python</span>
+                </div>
+                <div class="snippet-body">
+                    <pre><code>response_format = {
+    'type': 'json_schema',
+    'json_schema': {
+        'name': 'json_schema',
+        'schema': json_schema
+    }
+}</code></pre>
+                    <button class="copy-btn" onclick="copySnippet(this, 0)">📋 复制</button>
+                </div>
+            </div>
+
+            <!-- 代码片段2：OpenAI Client 使用 Pydantic -->
+            <div class="snippet-card">
+                <div class="snippet-header">
+                    <span class="snippet-label">OpenAI Client 使用 Pydantic</span>
+                    <span class="snippet-badge">Python</span>
+                </div>
+                <div class="snippet-body">
+                    <pre><code>response_format = {
+    'type': 'json_schema',
+    'json_schema': {
+        'name': 'json_schema',
+        'schema': pydantic_class.model_json_schema()
+    }
+}</code></pre>
+                    <button class="copy-btn" onclick="copySnippet(this, 1)">📋 复制</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================
+             PART 2: 主操作区 —— 左输入，右输出
+        ============================================================ -->
+        <section class="main-area">
+
+            <!-- 左侧：输入面板 -->
+            <div class="input-panel">
+                <label class="panel-label" for="jsonInput">
+                    <span class="icon">📥</span> JSON 示例
+                </label>
+                <textarea
+                    id="jsonInput"
+                    class="json-textarea"
+                    placeholder='粘贴你的 JSON 结构...&#10;&#10;例如：&#10;{&#10;  "name": "Alice",&#10;  "age": 25,&#10;  "email": "alice@example.com"&#10;}'
+                    spellcheck="false"
+                ></textarea>
+                <div class="btn-group">
+                    <button class="generate-btn btn-primary" id="btnJsonschema" onclick="generate('jsonschema')">
+                        Json Schema
+                    </button>
+                    <button class="generate-btn btn-secondary" id="btnPydantic" onclick="generate('pydantic')">
+                        Pydantic
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右侧：输出面板 -->
+            <div class="output-panel">
+                <label class="panel-label">
+                    <span class="icon">📤</span> 生成结果
+                </label>
+                <div class="output-area" id="outputArea">
+                    <span class="output-placeholder">点击按钮生成提示词，结果将显示在这里...</span>
+                </div>
+                <div class="output-toolbar">
+                    <button class="copy-btn" id="copyOutputBtn" onclick="copyOutput()" disabled>
+                        📋 复制
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ============================================================
+             PART 3: 统计信息 —— 按钮点击次数
+             数据保存在 localStorage 中，跨会话持久化
+        ============================================================ -->
+        <section class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-icon">🔧</span>
+                <span>Json Schema 点击：</span>
+                <span class="stat-count" id="countJsonschema">0</span>
+                <span>次</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-icon">🐍</span>
+                <span>Pydantic 点击：</span>
+                <span class="stat-count" id="countPydantic">0</span>
+                <span>次</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-icon">📊</span>
+                <span>总计：</span>
+                <span class="stat-count" id="countTotal">0</span>
+                <span>次</span>
+            </div>
+        </section>
+
+    </div><!-- .container -->
+
+
+    <!-- ============================================================ -->
+    <!--  脚本：提示词生成 + 点击统计 + 复制功能                      -->
+    <!-- ============================================================ -->
+    <script>
+        // ============================================================
+        //  常量：两个提示词模板
+        //  修改模板文字就在这里改
+        // ============================================================
+        const PROMPT_TEMPLATES = {
+            jsonschema: '根据这个json结构，生成json schema，其中false/true需要表示为False/True：\n{json_data}',
+            pydantic:   '根据这个json结构，生成pydantic的定义代码：\n{json_data}'
+        };
+
+        // ============================================================
+        //  代码片段内容（用于复制按钮）
+        // ============================================================
+        const SNIPPETS = [
+`response_format = {
+    'type': 'json_schema',
+    'json_schema': {
+        'name': 'json_schema',
+        'schema': json_schema
+    }
+}`,
+`response_format = {
+    'type': 'json_schema',
+    'json_schema': {
+        'name': 'json_schema',
+        'schema': pydantic_class.model_json_schema()
+    }
+}`
+        ];
+
+        // ============================================================
+        //  统计相关：localStorage 键名
+        // ============================================================
+        const STORAGE_KEY_JSONSCHEMA = 'json-schema:click:jsonschema';
+        const STORAGE_KEY_PYDANTIC   = 'json-schema:click:pydantic';
+
+        /**
+         * 从 localStorage 读取计数，返回数字
+         */
+        function getCount(key) {
+            const val = localStorage.getItem(key);
+            return val ? parseInt(val, 10) : 0;
+        }
+
+        /**
+         * 保存计数到 localStorage
+         */
+        function saveCount(key, count) {
+            localStorage.setItem(key, String(count));
+        }
+
+        /**
+         * 更新页面上的统计数字显示
+         */
+        function updateStatsDisplay() {
+            const countJsonschema = getCount(STORAGE_KEY_JSONSCHEMA);
+            const countPydantic   = getCount(STORAGE_KEY_PYDANTIC);
+            const total = countJsonschema + countPydantic;
+
+            document.getElementById('countJsonschema').textContent = countJsonschema;
+            document.getElementById('countPydantic').textContent   = countPydantic;
+            document.getElementById('countTotal').textContent      = total;
+        }
+
+        /**
+         * 增加指定类型的计数
+         */
+        function incrementCount(type) {
+            const key = type === 'jsonschema' ? STORAGE_KEY_JSONSCHEMA : STORAGE_KEY_PYDANTIC;
+            const current = getCount(key);
+            saveCount(key, current + 1);
+            updateStatsDisplay();
+        }
+
+        // ============================================================
+        //  核心功能：生成提示词
+        // ============================================================
+
+        /**
+         * 根据用户选择的类型拼接提示词并显示在右侧
+         * @param {'jsonschema' | 'pydantic'} type - 生成类型
+         */
+        function generate(type) {
+            const inputEl = document.getElementById('jsonInput');
+            const outputEl = document.getElementById('outputArea');
+            const copyBtn = document.getElementById('copyOutputBtn');
+            const jsonData = inputEl.value.trim();
+
+            // 空输入校验
+            if (!jsonData) {
+                outputEl.innerHTML = '<span style="color: #ff3b30;">⚠️ 请先在左侧输入 JSON 结构</span>';
+                copyBtn.disabled = true;
+                // 轻微抖动输入框提示用户
+                inputEl.style.borderColor = '#ff3b30';
+                setTimeout(() => { inputEl.style.borderColor = ''; }, 600);
+                return;
+            }
+
+            // 拼接提示词
+            const template = PROMPT_TEMPLATES[type];
+            const result = template.replace('{json_data}', jsonData);
+
+            // 显示到右侧
+            outputEl.textContent = result;
+            copyBtn.disabled = false;
+
+            // 增加统计计数
+            incrementCount(type);
+        }
+
+        // ============================================================
+        //  复制功能
+        // ============================================================
+
+        /**
+         * 复制代码片段到剪贴板
+         * @param {HTMLElement} btn - 被点击的按钮元素
+         * @param {number} index - 片段索引
+         */
+        function copySnippet(btn, index) {
+            const text = SNIPPETS[index];
+            copyToClipboard(text, btn);
+        }
+
+        /**
+         * 复制输出区内容到剪贴板
+         */
+        function copyOutput() {
+            const outputEl = document.getElementById('outputArea');
+            const text = outputEl.textContent;
+            const btn = document.getElementById('copyOutputBtn');
+
+            if (!text || outputEl.querySelector('.output-placeholder')) {
+                return; // 还是占位文字，不复制
+            }
+
+            copyToClipboard(text, btn);
+        }
+
+        /**
+         * 通用复制到剪贴板方法，并给按钮反馈动画
+         * @param {string} text - 要复制的文本
+         * @param {HTMLElement} btn - 按钮元素，用于显示反馈
+         */
+        function copyToClipboard(text, btn) {
+            navigator.clipboard.writeText(text).then(() => {
+                // 按钮反馈：显示 "已复制"
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '✅ 已复制';
+                btn.classList.add('copied');
+
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.remove('copied');
+                }, 1500);
+            }).catch(() => {
+                // 降级方案：使用传统方法
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '✅ 已复制';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.remove('copied');
+                }, 1500);
+            });
+        }
+
+        // ============================================================
+        //  页面初始化
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始化统计显示
+            updateStatsDisplay();
+
+            // 支持 Ctrl/Cmd + Enter 快捷生成（默认走 Json Schema）
+            const inputEl = document.getElementById('jsonInput');
+            inputEl.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    generate('jsonschema');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
