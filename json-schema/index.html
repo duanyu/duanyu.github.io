@@ -81,7 +81,7 @@
         }
 
         /* ============================================================
-           PART 1: 代码片段展示区 —— 约占 30%
+           PART 2: 代码片段展示区 —— 约占 20%
            两个并排卡片，展示 OpenAI Client 的用法
            ============================================================ */
         .snippets {
@@ -170,8 +170,47 @@
             color: #fff;
         }
 
+        /* 输出区的复制按钮 —— 更大更醒目，方便用户点击 */
+        .copy-btn-big {
+            font-size: 0.92rem;
+            padding: 10px 28px;
+            font-weight: 600;
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+            border-radius: var(--radius-sm);
+        }
+
+        .copy-btn-big:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
+        }
+
+        .copy-btn-big:active {
+            transform: translateY(0);
+        }
+
+        .copy-btn-big.copied {
+            background: #34c759;
+            border-color: #34c759;
+            color: #fff;
+        }
+
+        /* 未生成结果时按钮置灰 */
+        .copy-btn-big:disabled {
+            background: #e5e5ea;
+            border-color: #d2d2d7;
+            color: #aeaeb2;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
         /* ============================================================
-           PART 2: 主操作区 —— 约占 70%
+           PART 1: 主操作区 —— 约占 80%
            左侧输入 JSON + 按钮，右侧展示拼接后的提示词
            ============================================================ */
         .main-area {
@@ -406,7 +445,50 @@
         </a>
 
         <!-- ============================================================
-             PART 1: 代码片段展示 —— 固定参考代码
+             PART 1: 主操作区 —— 左输入，右输出
+        ============================================================ -->
+        <section class="main-area">
+
+            <!-- 左侧：输入面板 -->
+            <div class="input-panel">
+                <label class="panel-label" for="jsonInput">
+                    <span class="icon">📥</span> JSON 示例
+                </label>
+                <textarea
+                    id="jsonInput"
+                    class="json-textarea"
+                    placeholder='粘贴你的 JSON 结构...&#10;&#10;例如：&#10;{&#10;  "name": "Alice",&#10;  "age": 25,&#10;  "email": "alice@example.com"&#10;}'
+                    spellcheck="false"
+                ></textarea>
+                <div class="btn-group">
+                    <button class="generate-btn btn-primary" id="btnJsonschema" onclick="generate('jsonschema')">
+                        -> Json Schema
+                    </button>
+                    <button class="generate-btn btn-secondary" id="btnPydantic" onclick="generate('pydantic')">
+                        -> Pydantic
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右侧：输出面板 -->
+            <div class="output-panel">
+                <label class="panel-label">
+                    <span class="icon">📤</span> 生成结果
+                </label>
+                <div class="output-area" id="outputArea">
+                    <span class="output-placeholder">点击按钮生成提示词，结果将显示在这里...</span>
+                </div>
+                <div class="output-toolbar">
+                    <button class="copy-btn copy-btn-big" id="copyOutputBtn" onclick="copyOutput()" disabled>
+                        📋 复制提示词
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ============================================================
+             PART 2: 代码片段展示 —— 固定参考代码
              两个卡片并排：OpenAI Client 使用 JSON Schema / 使用 Pydantic
         ============================================================ -->
         <section class="snippets">
@@ -456,49 +538,6 @@ except ValidationError as e:
                     <button class="copy-btn" onclick="copySnippet(this, 1)">📋 复制</button>
                 </div>
             </div>
-        </section>
-
-        <!-- ============================================================
-             PART 2: 主操作区 —— 左输入，右输出
-        ============================================================ -->
-        <section class="main-area">
-
-            <!-- 左侧：输入面板 -->
-            <div class="input-panel">
-                <label class="panel-label" for="jsonInput">
-                    <span class="icon">📥</span> JSON 示例
-                </label>
-                <textarea
-                    id="jsonInput"
-                    class="json-textarea"
-                    placeholder='粘贴你的 JSON 结构...&#10;&#10;例如：&#10;{&#10;  "name": "Alice",&#10;  "age": 25,&#10;  "email": "alice@example.com"&#10;}'
-                    spellcheck="false"
-                ></textarea>
-                <div class="btn-group">
-                    <button class="generate-btn btn-primary" id="btnJsonschema" onclick="generate('jsonschema')">
-                        -> Json Schema
-                    </button>
-                    <button class="generate-btn btn-secondary" id="btnPydantic" onclick="generate('pydantic')">
-                        -> Pydantic
-                    </button>
-                </div>
-            </div>
-
-            <!-- 右侧：输出面板 -->
-            <div class="output-panel">
-                <label class="panel-label">
-                    <span class="icon">📤</span> 生成结果
-                </label>
-                <div class="output-area" id="outputArea">
-                    <span class="output-placeholder">点击按钮生成提示词，结果将显示在这里...</span>
-                </div>
-                <div class="output-toolbar">
-                    <button class="copy-btn" id="copyOutputBtn" onclick="copyOutput()" disabled>
-                        📋 复制
-                    </button>
-                </div>
-            </div>
-
         </section>
 
         <!-- ============================================================

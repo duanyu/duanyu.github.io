@@ -16,7 +16,11 @@
 
 整体而言，页面分为上下结构。
 
-上面部分占30%，主要放一些固定的、与使用json schema息息相关的代码片段：
+上部分占80%，又分为左右结构。
+左侧放输入（即文本格式的json示例），下方放两个按钮“-> Json Schema”、“-> Pydantic”
+右侧放拼接后的prompt结果。
+
+下部分占20%，主要放一些固定的、常用的、与使用json schema息息相关的代码片段：
 
 代码片段1（openai client使用json schema）
 ```python
@@ -48,10 +52,6 @@ try:
 except ValidationError as e:
     print(e)
 ```
-
-下半部分占70%，又分为左右结构。
-左侧放输入（即文本格式的json示例），下方放两个按钮“-> Json Schema”、“-> Pydantic”
-右侧放拼接后的prompt结果。
 
 整个页面左上角放一个回到duanyu.github.io主页的按钮。
 
