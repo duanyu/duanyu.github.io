@@ -43,12 +43,12 @@ response_format = {
     }
 }
 
-import json
+# 校验返回内容（resp）
 from pydantic import ValidationError
 
 try:
     pydantic_data = pydantic_class.model_validate_json(resp)
-    json_data = json.loads(resp)
+    json_data = pydantic_data.model_dump()
 except ValidationError as e:
     print(e)
 ```
