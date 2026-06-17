@@ -538,8 +538,8 @@ except ValidationError as e:
         //  修改模板文字就在这里改
         // ============================================================
         const PROMPT_TEMPLATES = {
-            jsonschema: '根据这个json结构，生成json schema，其中false/true需要表示为False/True：\n{json_data}',
-            pydantic:   '根据这个json结构，生成pydantic的定义代码：\n{json_data}'
+            jsonschema: '根据这个json结构，生成json schema（OpenAI json schema格式，无需description，additionalProperties需要用False而非false）：\n{json_data}',
+            pydantic:   '根据这个json结构，生成pydantic V2的定义代码（无需description）：\n{json_data}'
         };
 
         // ============================================================
@@ -559,7 +559,16 @@ except ValidationError as e:
         'name': 'json_schema',
         'schema': pydantic_class.model_json_schema()
     }
-}`
+}
+
+import json
+from pydantic import ValidationError
+
+try:
+    pydantic_data = pydantic_class.model_validate_json(resp)
+    json_data = json.loads(resp)
+except ValidationError as e:
+    print(e)`
         ];
 
         // ============================================================
