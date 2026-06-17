@@ -5,11 +5,11 @@
 输出：提示词。一个用来生成json schema，一个用来生成pydantic类代码（选择生成哪个，取决于用户的选择）
 
 提示词1：生成json schema
-根据这个json结构，生成json schema，其中false/true需要表示为False/True：
+根据这个json结构，生成json schema（OpenAI json schema格式，无需description，additionalProperties需要用False而非false）：
 {json_data}
 
 提示词2：生成pydantic
-根据这个json结构，生成pydantic的定义代码：
+根据这个json结构，生成pydantic V2的定义代码（无需description）：
 {json_data}
 
 ## 界面设计
@@ -29,7 +29,7 @@ response_format = {
 }
 ```
 
-代码片段2（openai client使用pydantic）
+代码片段2（openai client使用pydantic V2）
 ```python
 response_format = {
     'type': 'json_schema',
@@ -38,10 +38,19 @@ response_format = {
         'schema': pydantic_class.model_json_schema()
     }
 }
+
+import json
+from pydantic import ValidationError
+
+try:
+    pydantic_data = pydantic_class.model_validate_json(resp)
+    json_data = json.loads(resp)
+except ValidationError as e:
+    print(e)
 ```
 
 下半部分占70%，又分为左右结构。
-左侧放输入（即文本格式的json示例），下方放两个按钮“Json Schema”、“Pydantic”
+左侧放输入（即文本格式的json示例），下方放两个按钮“-> Json Schema”、“-> Pydantic”
 右侧放拼接后的prompt结果。
 
 整个页面左上角放一个回到duanyu.github.io主页的按钮。

@@ -56,12 +56,10 @@
         }
 
         /* ============================================================
-           PART 0: 返回主页按钮 —— 左上角固定
+           PART 0: 返回主页按钮 —— 置于内容区左上角
+           作为正常文档流元素，不脱离布局，避免与代码片段交叠
            ============================================================ */
         .back-link {
-            position: fixed;
-            top: 20px;
-            left: 24px;
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -74,7 +72,7 @@
             border-radius: 20px;
             box-shadow: var(--card-shadow);
             transition: background 0.2s, transform 0.15s;
-            z-index: 10;
+            align-self: flex-start;
         }
 
         .back-link:hover {
@@ -389,28 +387,23 @@
                 height: 1px;
             }
 
-            .back-link {
-                top: 12px;
-                left: 12px;
-                font-size: 0.82rem;
-                padding: 6px 12px;
-            }
+
         }
     </style>
 </head>
 <body>
 
     <!-- ============================================================
-         PART 0: 返回主页按钮
-    ============================================================ -->
-    <a class="back-link" href="../" title="返回 duanyu.github.io">
-        ← 返回主页
-    </a>
-
-    <!-- ============================================================
          主容器
     ============================================================ -->
     <div class="container">
+
+        <!-- ============================================================
+             PART 0: 返回主页按钮
+        ============================================================ -->
+        <a class="back-link" href="../" title="返回 duanyu.github.io">
+            ← 返回主页
+        </a>
 
         <!-- ============================================================
              PART 1: 代码片段展示 —— 固定参考代码
@@ -435,10 +428,10 @@
                 </div>
             </div>
 
-            <!-- 代码片段2：OpenAI Client 使用 Pydantic -->
+            <!-- 代码片段2：OpenAI Client 使用 Pydantic V2 -->
             <div class="snippet-card">
                 <div class="snippet-header">
-                    <span class="snippet-label">OpenAI Client 使用 Pydantic</span>
+                    <span class="snippet-label">OpenAI Client 使用 Pydantic V2</span>
                     <span class="snippet-badge">Python</span>
                 </div>
                 <div class="snippet-body">
@@ -448,7 +441,16 @@
         'name': 'json_schema',
         'schema': pydantic_class.model_json_schema()
     }
-}</code></pre>
+}
+
+import json
+from pydantic import ValidationError
+
+try:
+    pydantic_data = pydantic_class.model_validate_json(resp)
+    json_data = json.loads(resp)
+except ValidationError as e:
+    print(e)</code></pre>
                     <button class="copy-btn" onclick="copySnippet(this, 1)">📋 复制</button>
                 </div>
             </div>
@@ -472,10 +474,10 @@
                 ></textarea>
                 <div class="btn-group">
                     <button class="generate-btn btn-primary" id="btnJsonschema" onclick="generate('jsonschema')">
-                        Json Schema
+                        -> Json Schema
                     </button>
                     <button class="generate-btn btn-secondary" id="btnPydantic" onclick="generate('pydantic')">
-                        Pydantic
+                        -> Pydantic
                     </button>
                 </div>
             </div>
