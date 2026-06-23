@@ -171,6 +171,17 @@
         }
         .btn-download:hover { background: #e5e7eb; }
 
+        /* 下载计数 */
+        .paper-card .paper-dl-count {
+            margin-top: 12px;
+            font-size: 0.82rem;
+            color: var(--text-light);
+        }
+        .paper-card .paper-dl-count strong {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
         /* ============================================================
            PDF 预览弹窗
            ============================================================ */
@@ -288,11 +299,11 @@
     <div class="search-section">
         <div class="search-wrapper">
             <input type="text" id="searchInput"
-                   placeholder="搜索论文标题、作者、关键词..."
+                   placeholder="搜索论文标题..."
                    oninput="filterPapers()">
             <span class="search-icon">🔍</span>
         </div>
-        <p class="search-hint">支持按标题、作者、关键词检索</p>
+        <p class="search-hint">支持按论文标题检索</p>
     </div>
 
     <!-- ============================================================ -->
@@ -358,8 +369,8 @@
     // =============================================================
     const papers = [
         {
-            filename: "DeepSeekMath-V2: Towards Self-Verifiable Mathematical Reasoning.pdf",
-            title: "DeepSeekMath-V2: Towards Self-Verifiable Mathematical Reasoning"
+            filename: "Extracting books from production language models.pdf",
+            title: "Extracting Books from Production Language Models"
         }
         // ---- 新增论文模板：复制以下代码块，填入信息即可 ----
         /*
@@ -369,6 +380,25 @@
         },
         */
     ];
+
+    // =============================================================
+    //  下载计数（基于 localStorage 持久化）
+    // =============================================================
+    function getDownloadCount(filename) {
+        const key = "dl_" + filename;
+        return parseInt(localStorage.getItem(key) || "0", 10);
+    }
+
+    function incrementDownload(filename) {
+        const key = "dl_" + filename;
+        const count = getDownloadCount(filename) + 1;
+        localStorage.setItem(key, count);
+        return count;
+    }
+
+    function getTotalDownloads() {
+        return papers.reduce((sum, p) => sum + getDownloadCount(p.filename), 0);
+    }
 
     // =============================================================
     //  论文过滤（搜索）
@@ -396,7 +426,8 @@
         const emptyEl = document.getElementById("emptyState");
 
         // 更新统计文本
-        document.getElementById("statsText").textContent = "共 " + papers.length + " 篇论文";
+        const totalDownloads = getTotalDownloads();
+        document.getElementById("statsText").textContent = "共 " + papers.length + " 篇论文 · 总计 " + totalDownloads + " 次下载";
 
         if (filtered.length === 0) {
             listEl.innerHTML = "";
@@ -409,6 +440,7 @@
             const title = p.title;
             const pdfPath = "pdf/" + encodeURIComponent(p.filename);
 
+            const dlCount = getDownloadCount(p.filename);
             return `
                 <div class="paper-card">
                     <div class="paper-title">${escapeHtml(title)}</div>
@@ -416,10 +448,12 @@
                         <button class="btn btn-preview" onclick='openPreview("${escapeAttr(pdfPath)}", "${escapeAttr(title)}")'>
                             👁 预览
                         </button>
-                        <a class="btn btn-download" href="${escapeAttr(pdfPath)}" download>
+                        <a class="btn btn-download" href="${escapeAttr(pdfPath)}" download
+                           onclick="handleDownload('${escapeAttr(p.filename)}')">
                             ⬇ 下载 PDF
                         </a>
                     </div>
+                    <div class="paper-dl-count">📥 已下载 <strong>${dlCount}</strong> 次</div>
                 </div>
             `;
         }).join("");
@@ -459,6 +493,14 @@
 
     function escapeAttr(str) {
         return str.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    // =============================================================
+    //  下载处理：记录下载次数后刷新 UI
+    // =============================================================
+    function handleDownload(filename) {
+        incrementDownload(filename);
+        renderPapers();
     }
 
     // =============================================================
