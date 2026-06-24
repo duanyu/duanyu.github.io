@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>论文翻译 | Paper Translator</title>
+    <title>论文分享（中英对照翻译）</title>
 
     <!-- ============================================================ -->
     <!--  样式表：CSS 变量集中管理，方便后续调整风格                   -->
@@ -65,7 +65,24 @@
             font-size: 1.5rem;
             font-weight: 700;
             color: var(--accent);
+            margin-bottom: 4px;
         }
+
+        .title-group {
+            text-align: center;
+        }
+
+        .powered-by {
+            font-size: 0.75rem;
+            color: #bbb;
+            margin-top: 2px;
+        }
+        .powered-by a {
+            color: #aaa;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .powered-by a:hover { color: #888; }
 
 
         /* ============================================================
@@ -290,7 +307,10 @@
     <!-- ============================================================ -->
     <div class="top-bar">
         <a class="back-link" href="../">← 返回主页</a>
-        <h1 class="site-title">📄 论文翻译</h1>
+        <div class="title-group">
+            <h1 class="site-title">📄 论文分享（中英对照翻译）</h1>
+            <p class="powered-by">Powered by <a href="https://pdf.baimiaoapp.com/" target="_blank" rel="noopener">白描pdf</a></p>
+        </div>
     </div>
 
     <!-- ============================================================ -->
