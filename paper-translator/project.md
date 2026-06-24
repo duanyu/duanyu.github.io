@@ -13,4 +13,4 @@
 论文分享（中英对照翻译）
 
 软广：
-在网站标题下方，加入一个Powered by 白描pdf（https://pdf.baimiaoapp.com/）（pdf转md，pdf转word，pdf翻译，图片转excel等），的标识，对我们自己做的网站进行宣传。希望能起到广告的作用，但又不太喧宾夺主。
+在网站标题下方，加入一个Powered by 白描pdf（https://pdf.baimiaoapp.com/），的标识，对我们自己做的网站进行宣传。希望能起到广告的作用，但又不太喧宾夺主。
