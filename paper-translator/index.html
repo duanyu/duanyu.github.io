@@ -122,6 +122,61 @@
         }
 
         /* ============================================================
+           分类筛选标签
+           ============================================================ */
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .filter-tab {
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.88rem;
+            cursor: pointer;
+            border: 2px solid #e5e7eb;
+            background: var(--card-bg);
+            color: var(--text-light);
+            transition: all 0.2s;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .filter-tab:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .filter-tab.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        /* ============================================================
+           子分类徽章
+           ============================================================ */
+        .paper-card .paper-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .paper-card .paper-award-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .badge-best-paper { background: #fef3c7; color: #92400e; }
+        .badge-best-theme { background: #ede9fe; color: #5b21b6; }
+        .badge-best-resource { background: #dbeafe; color: #1e40af; }
+        .badge-best-social-impact { background: #d1fae5; color: #065f46; }
+        .badge-outstanding { background: #f3f4f6; color: #374151; }
+        .badge-srw-best-paper { background: #fce7f3; color: #9d174d; }
+
+        /* ============================================================
            统计信息
            ============================================================ */
         .stats-bar {
@@ -327,6 +382,14 @@
     </div>
 
     <!-- ============================================================ -->
+    <!--  分类筛选标签                                               -->
+    <!-- ============================================================ -->
+    <div class="filter-tabs" id="filterTabs">
+        <button class="filter-tab active" data-filter="all" onclick="setFilter('all')">📚 全部论文</button>
+        <button class="filter-tab" data-filter="acl-2026-award" onclick="setFilter('acl-2026-award')">🏆 ACL 2026 Award</button>
+    </div>
+
+    <!-- ============================================================ -->
     <!--  统计信息                                                   -->
     <!-- ============================================================ -->
     <div class="stats-bar">
@@ -388,22 +451,235 @@
     //    - title:      论文标题（英文）
     // =============================================================
     const papers = [
+        // =============================================================
+        //  通用论文
+        // =============================================================
         {
             filename: "Extracting books from production language models.pdf",
-            title: "Extracting Books from Production Language Models"
+            title: "Extracting Books from Production Language Models",
+            category: "general"
         },
         {
             filename: "Not All Rollouts are Useful Down-Sampling Rollouts in LLM Reinforcement Learning.pdf",
-            title: "Not All Rollouts are Useful: Down-Sampling Rollouts in LLM Reinforcement Learning"
-        }
-        // ---- 新增论文模板：复制以下代码块，填入信息即可 ----
-        /*
-        {
-            filename: "your-paper.pdf",
-            title: "Paper Title"
+            title: "Not All Rollouts are Useful: Down-Sampling Rollouts in LLM Reinforcement Learning",
+            category: "general"
         },
-        */
+
+        // =============================================================
+        //  ACL 2026 Award — Best Paper Awards
+        // =============================================================
+        {
+            filename: "acl-2026-award/The Imperfective Paradox in Large Language Models.pdf",
+            title: "The Imperfective Paradox in Large Language Models",
+            category: "acl-2026-award",
+            subcategory: "Best Paper"
+        },
+        {
+            filename: "acl-2026-award/Memory Efficiency and Resource-Rational Encoding in Sentence Processing.pdf",
+            title: "Memory Efficiency and Resource-Rational Encoding in Sentence Processing",
+            category: "acl-2026-award",
+            subcategory: "Best Paper"
+        },
+        {
+            filename: "acl-2026-award/Characterizing the Expressivity of Local Attention in Transformers.pdf",
+            title: "Characterizing the Expressivity of Local Attention in Transformers",
+            category: "acl-2026-award",
+            subcategory: "Best Paper"
+        },
+
+        // =============================================================
+        //  ACL 2026 Award — Best Theme Papers
+        // =============================================================
+        {
+            filename: "acl-2026-award/CoSToM - Causal-oriented Steering for Intrinsic Theory-of-Mind Alignment in Large Language Models.pdf",
+            title: "CoSToM: Causal-oriented Steering for Intrinsic Theory-of-Mind Alignment in Large Language Models",
+            category: "acl-2026-award",
+            subcategory: "Best Theme"
+        },
+        {
+            filename: "acl-2026-award/Mapping the Circumplex of Affect - Geometric Analysis of Emotion Representations via Hyperspherical Contrastive Learning.pdf",
+            title: "Mapping the Circumplex of Affect: Geometric Analysis of Emotion Representations via Hyperspherical Contrastive Learning",
+            category: "acl-2026-award",
+            subcategory: "Best Theme"
+        },
+
+        // =============================================================
+        //  ACL 2026 Award — Best Resource Papers
+        // =============================================================
+        {
+            filename: "acl-2026-award/HSCodeComp - A Realistic and Expert-level Agent Benchmark for Hierarchical Rule Application.pdf",
+            title: "HSCodeComp: A Realistic and Expert-level Agent Benchmark for Hierarchical Rule Application",
+            category: "acl-2026-award",
+            subcategory: "Best Resource"
+        },
+        {
+            filename: "acl-2026-award/ImplicitMemBench - Measuring Unconscious Behavioral Adaptation in Large Language Models.pdf",
+            title: "ImplicitMemBench: Measuring Unconscious Behavioral Adaptation in Large Language Models",
+            category: "acl-2026-award",
+            subcategory: "Best Resource"
+        },
+        {
+            filename: "acl-2026-award/Audio MultiChallenge - A Multi-Turn Evaluation of Spoken Dialogue Systems on Natural Human Interaction.pdf",
+            title: "Audio MultiChallenge: A Multi-Turn Evaluation of Spoken Dialogue Systems on Natural Human Interaction",
+            category: "acl-2026-award",
+            subcategory: "Best Resource"
+        },
+        {
+            filename: "acl-2026-award/VeriTaS - The First Dynamic Benchmark for Multimodal Automated Fact-Checking.pdf",
+            title: "VeriTaS: The First Dynamic Benchmark for Multimodal Automated Fact-Checking",
+            category: "acl-2026-award",
+            subcategory: "Best Resource"
+        },
+
+        // =============================================================
+        //  ACL 2026 Award — Best Social Impact Papers
+        // =============================================================
+        {
+            filename: "acl-2026-award/DIA-HARM - Dialectal Disparities in Harmful Content Detection Across 50 English Dialects.pdf",
+            title: "DIA-HARM: Dialectal Disparities in Harmful Content Detection Across 50 English Dialects",
+            category: "acl-2026-award",
+            subcategory: "Best Social Impact"
+        },
+        {
+            filename: "acl-2026-award/Your Students Don't Use LLMs Like You Wish They Did.pdf",
+            title: "Your Students Don't Use LLMs Like You Wish They Did",
+            category: "acl-2026-award",
+            subcategory: "Best Social Impact"
+        },
+        {
+            filename: "acl-2026-award/Afri-MCQA - Multimodal Cultural Question Answering for African Languages.pdf",
+            title: "Afri-MCQA: Multimodal Cultural Question Answering for African Languages",
+            category: "acl-2026-award",
+            subcategory: "Best Social Impact"
+        },
+
+        // =============================================================
+        //  ACL 2026 Award — Outstanding Papers
+        // =============================================================
+        {
+            filename: "acl-2026-award/MauBERT - Universal Phonetic Inductive Biases for Few-Shot Acoustic Units Discovery.pdf",
+            title: "MauBERT: Universal Phonetic Inductive Biases for Few-Shot Acoustic Units Discovery",
+            category: "acl-2026-award",
+            subcategory: "Outstanding"
+        },
+        {
+            filename: "acl-2026-award/Evolutionary Guided Decoding - Iterative Value Refinement for LLMs.pdf",
+            title: "Evolutionary Guided Decoding: Iterative Value Refinement for LLMs",
+            category: "acl-2026-award",
+            subcategory: "Outstanding"
+        },
+        {
+            filename: "acl-2026-award/Beyond the Final Actor - Modeling the Dual Roles of Creator and Editor for Fine-Grained LLM-Generated Text Detection.pdf",
+            title: "Beyond the Final Actor: Modeling the Dual Roles of Creator and Editor for Fine-Grained LLM-Generated Text Detection",
+            category: "acl-2026-award",
+            subcategory: "Outstanding"
+        },
+        {
+            filename: "acl-2026-award/Lying with Truths - Open-Channel Multi-Agent Collusion for Belief Manipulation via Generative Montage.pdf",
+            title: "Lying with Truths: Open-Channel Multi-Agent Collusion for Belief Manipulation via Generative Montage",
+            category: "acl-2026-award",
+            subcategory: "Outstanding"
+        },
+        {
+            filename: "acl-2026-award/Hierarchical Acoustic-Semantic Modeling - Modality Separation and Semantic Coherence for Full-Duplex SLMs.pdf",
+            title: "Hierarchical Acoustic-Semantic Modeling: Modality Separation and Semantic Coherence for Full-Duplex SLMs",
+            category: "acl-2026-award",
+            subcategory: "Outstanding"
+        },
+        {
+            filename: "acl-2026-award/Mind the (DH) Gap A Contrast in Risky Choices Between Reasoning and Conversational LLMs.pdf",
+            title: "Mind the (DH) Gap! A Contrast in Risky Choices Between Reasoning and Conversational LLMs",
+            category: "acl-2026-award",
+            subcategory: "Outstanding"
+        },
+        {
+            filename: "acl-2026-award/MediEval - A Unified Medical Benchmark for Patient-Contextual and Knowledge-Grounded Reasoning in LLMs.pdf",
+            title: "MediEval: A Unified Medical Benchmark for Patient-Contextual and Knowledge-Grounded Reasoning in LLMs",
+            category: "acl-2026-award",
+            subcategory: "Outstanding"
+        },
+        {
+            filename: "acl-2026-award/Maximizing Local Entropy Where It Matters - Prefix-Aware Localized LLM Unlearning.pdf",
+            title: "Maximizing Local Entropy Where It Matters: Prefix-Aware Localized LLM Unlearning",
+            category: "acl-2026-award",
+            subcategory: "Outstanding"
+        },
+        {
+            filename: "acl-2026-award/GeoRA - Geometry-Aware Low-Rank Adaptation for RLVR.pdf",
+            title: "GeoRA: Geometry-Aware Low-Rank Adaptation for RLVR",
+            category: "acl-2026-award",
+            subcategory: "Outstanding"
+        },
+        {
+            filename: "acl-2026-award/Systematicity between Forms and Meanings across Languages Supports Efficient Communication.pdf",
+            title: "Systematicity between Forms and Meanings across Languages Supports Efficient Communication",
+            category: "acl-2026-award",
+            subcategory: "Outstanding"
+        },
+        {
+            filename: "acl-2026-award/Rethinking Entropy Interventions in RLVR - An Entropy Change Perspective.pdf",
+            title: "Rethinking Entropy Interventions in RLVR: An Entropy Change Perspective",
+            category: "acl-2026-award",
+            subcategory: "Outstanding"
+        },
+        {
+            filename: "acl-2026-award/From Local to Global - Revisiting Structured Pruning Paradigms for Large Language Models.pdf",
+            title: "From Local to Global: Revisiting Structured Pruning Paradigms for Large Language Models",
+            category: "acl-2026-award",
+            subcategory: "Outstanding"
+        },
+        {
+            filename: "acl-2026-award/Massively Multilingual Joint Segmentation and Glossing.pdf",
+            title: "Massively Multilingual Joint Segmentation and Glossing",
+            category: "acl-2026-award",
+            subcategory: "Outstanding"
+        },
+        {
+            filename: "acl-2026-award/CAR-bench - Evaluating the Consistency and Limit-Awareness of LLM Agents under Real-World Uncertainty.pdf",
+            title: "CAR-bench: Evaluating the Consistency and Limit-Awareness of LLM Agents under Real-World Uncertainty",
+            category: "acl-2026-award",
+            subcategory: "Outstanding"
+        },
+        {
+            filename: "acl-2026-award/ViLL-E - Video LLM Embeddings for Retrieval.pdf",
+            title: "ViLL-E: Video LLM Embeddings for Retrieval",
+            category: "acl-2026-award",
+            subcategory: "Outstanding"
+        },
+        {
+            filename: "acl-2026-award/CxMP - A Linguistic Minimal-Pair Benchmark for Evaluating Constructional Understanding in Language Models.pdf",
+            title: "CxMP: A Linguistic Minimal-Pair Benchmark for Evaluating Constructional Understanding in Language Models",
+            category: "acl-2026-award",
+            subcategory: "Outstanding"
+        },
+        {
+            filename: "acl-2026-award/CIG - Measuring Conversational Information Gain in Deliberative Dialogues with Semantic Memory Dynamics.pdf",
+            title: "CIG: Measuring Conversational Information Gain in Deliberative Dialogues with Semantic Memory Dynamics",
+            category: "acl-2026-award",
+            subcategory: "Outstanding"
+        },
+
+        // =============================================================
+        //  ACL 2026 Award — Student Research Workshop Best Papers
+        // =============================================================
+        {
+            filename: "acl-2026-award/Evaluation of Multilingual Ability to Use Spatial Deictic Expressions in Vision-Language Models.pdf",
+            title: "Evaluation of Multilingual Ability to Use Spatial Deictic Expressions in Vision-Language Models",
+            category: "acl-2026-award",
+            subcategory: "SRW Best Paper"
+        },
+        {
+            filename: "acl-2026-award/BanglaSocialBench - A Benchmark for Evaluating Sociopragmatic and Cultural Alignment of LLMs in Bangladeshi Social Interaction.pdf",
+            title: "BanglaSocialBench: A Benchmark for Evaluating Sociopragmatic and Cultural Alignment of LLMs in Bangladeshi Social Interaction",
+            category: "acl-2026-award",
+            subcategory: "SRW Best Paper"
+        }
     ];
+
+    // =============================================================
+    //  当前筛选状态
+    // =============================================================
+    let currentFilter = "all";  // "all" | "acl-2026-award"
 
     // =============================================================
     //  下载计数（基于 localStorage 持久化）
@@ -420,12 +696,12 @@
         return count;
     }
 
-    function getTotalDownloads() {
-        return papers.reduce((sum, p) => sum + getDownloadCount(p.filename), 0);
+    function getTotalDownloads(pool) {
+        return (pool || papers).reduce((sum, p) => sum + getDownloadCount(p.filename), 0);
     }
 
     // =============================================================
-    //  论文过滤（搜索）
+    //  论文过滤（搜索 + 分类筛选）
     // =============================================================
     function filterPapers() {
         renderPapers();
@@ -433,12 +709,66 @@
 
     function getFilteredPapers() {
         const query = document.getElementById("searchInput").value.trim().toLowerCase();
-        if (!query) return papers;
 
-        return papers.filter(p => {
-            if (p.title.toLowerCase().includes(query)) return true;
-            return false;
+        let pool = papers;
+        // 分类筛选
+        if (currentFilter !== "all") {
+            pool = pool.filter(p => p.category === currentFilter);
+        }
+
+        // 搜索过滤
+        if (!query) return pool;
+        return pool.filter(p => p.title.toLowerCase().includes(query));
+    }
+
+    // =============================================================
+    //  分类筛选切换
+    // =============================================================
+    function setFilter(filterName) {
+        currentFilter = filterName;
+
+        // 更新标签页激活状态
+        document.querySelectorAll(".filter-tab").forEach(tab => {
+            tab.classList.toggle("active", tab.dataset.filter === filterName);
         });
+
+        // 更新 URL 参数（不刷新页面）
+        const url = new URL(window.location);
+        if (filterName === "all") {
+            url.searchParams.delete("filter");
+        } else {
+            url.searchParams.set("filter", filterName);
+        }
+        window.history.replaceState({}, "", url);
+
+        // 更新页面标题
+        updatePageTitle();
+
+        // 清空搜索框并重新渲染
+        document.getElementById("searchInput").value = "";
+        renderPapers();
+    }
+
+    // =============================================================
+    //  从 URL 读取筛选参数
+    // =============================================================
+    function getFilterFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("filter") || "all";
+    }
+
+    // =============================================================
+    //  更新页面标题和 h1
+    // =============================================================
+    function updatePageTitle() {
+        const h1 = document.querySelector(".site-title");
+        if (currentFilter === "acl-2026-award") {
+            document.title = "ACL 2026 Award 论文（中英对照翻译版）";
+            h1.textContent = "🏆 ACL 2026 Award 论文";
+        } else {
+            document.title = "论文分享（中英对照翻译版）";
+            h1.textContent = "📄 论文分享（中英对照翻译版）";
+        }
     }
 
     // =============================================================
@@ -449,9 +779,16 @@
         const listEl = document.getElementById("paperList");
         const emptyEl = document.getElementById("emptyState");
 
+        // 当前筛选下的论文池
+        const pool = currentFilter === "all" ? papers : papers.filter(p => p.category === currentFilter);
+        const totalDownloads = getTotalDownloads(pool);
+
         // 更新统计文本
-        const totalDownloads = getTotalDownloads();
-        document.getElementById("statsText").textContent = "共 " + papers.length + " 篇论文 · 总计 " + totalDownloads + " 次下载";
+        if (currentFilter === "acl-2026-award") {
+            document.getElementById("statsText").textContent = "ACL 2026 Award · 共 " + pool.length + " 篇论文 · 总计 " + totalDownloads + " 次下载";
+        } else {
+            document.getElementById("statsText").textContent = "共 " + pool.length + " 篇论文 · 总计 " + totalDownloads + " 次下载";
+        }
 
         if (filtered.length === 0) {
             listEl.innerHTML = "";
@@ -463,10 +800,18 @@
         listEl.innerHTML = filtered.map(p => {
             const title = p.title;
             const pdfPath = "pdf/" + encodeURIComponent(p.filename);
-
             const dlCount = getDownloadCount(p.filename);
+
+            // 子分类徽章
+            let badgeHtml = "";
+            if (p.subcategory) {
+                const badgeClass = "badge-" + p.subcategory.toLowerCase().replace(/\s+/g, "-");
+                badgeHtml = `<span class="paper-award-badge ${badgeClass}">${escapeHtml(p.subcategory)}</span>`;
+            }
+
             return `
                 <div class="paper-card">
+                    ${badgeHtml ? `<div class="paper-meta">${badgeHtml}</div>` : ""}
                     <div class="paper-title">${escapeHtml(title)}</div>
                     <div class="paper-actions">
                         <button class="btn btn-preview" onclick='openPreview("${escapeAttr(pdfPath)}", "${escapeAttr(title)}")'>
@@ -531,6 +876,18 @@
     //  初始化：页面加载完毕后渲染
     // =============================================================
     document.addEventListener("DOMContentLoaded", function() {
+        // 从 URL 读取筛选参数
+        currentFilter = getFilterFromURL();
+
+        // 初始化标签页激活状态
+        document.querySelectorAll(".filter-tab").forEach(tab => {
+            tab.classList.toggle("active", tab.dataset.filter === currentFilter);
+        });
+
+        // 更新页面标题
+        updatePageTitle();
+
+        // 渲染论文列表
         renderPapers();
     });
 </script>
