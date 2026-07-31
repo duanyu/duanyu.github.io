@@ -209,7 +209,13 @@
             font-size: 1.1rem;
             font-weight: 600;
             color: var(--accent);
-            margin-bottom: 6px;
+            margin-bottom: 4px;
+        }
+        .paper-card .paper-title-zh {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 8px;
+            line-height: 1.5;
         }
 
 
@@ -378,7 +384,7 @@
                    oninput="filterPapers()">
             <span class="search-icon">🔍</span>
         </div>
-        <p class="search-hint">支持按论文标题检索</p>
+        <p class="search-hint">支持按论文中/英文标题检索</p>
     </div>
 
     <!-- ============================================================ -->
@@ -447,8 +453,9 @@
     // =============================================================
     //  论文数据（新增论文只需在此数组中添加对象即可）
     //  字段说明：
-    //    - filename:   pdf/ 目录下的文件名
-    //    - title:      论文标题（英文）
+    //    - filename:    pdf/ 目录下的文件名
+    //    - title:       论文标题（英文）
+    //    - title_zh:    论文标题（中文翻译）
     // =============================================================
     const papers = [
         // =============================================================
@@ -457,11 +464,13 @@
         {
             filename: "Extracting books from production language models.pdf",
             title: "Extracting Books from Production Language Models",
+            title_zh: "从生产环境语言模型中提取书籍内容",
             category: "general"
         },
         {
             filename: "Not All Rollouts are Useful Down-Sampling Rollouts in LLM Reinforcement Learning.pdf",
             title: "Not All Rollouts are Useful: Down-Sampling Rollouts in LLM Reinforcement Learning",
+            title_zh: "并非所有采样都有效：LLM强化学习中的下采样策略",
             category: "general"
         },
 
@@ -471,18 +480,21 @@
         {
             filename: "acl-2026-award/The Imperfective Paradox in Large Language Models.pdf",
             title: "The Imperfective Paradox in Large Language Models",
+            title_zh: "大语言模型中的未完成体悖论",
             category: "acl-2026-award",
             subcategory: "Best Paper"
         },
         {
             filename: "acl-2026-award/Memory Efficiency and Resource-Rational Encoding in Sentence Processing.pdf",
             title: "Memory Efficiency and Resource-Rational Encoding in Sentence Processing",
+            title_zh: "句子处理中的记忆效率与资源理性编码",
             category: "acl-2026-award",
             subcategory: "Best Paper"
         },
         {
             filename: "acl-2026-award/Characterizing the Expressivity of Local Attention in Transformers.pdf",
             title: "Characterizing the Expressivity of Local Attention in Transformers",
+            title_zh: "Transformer中局部注意力的表达能力刻画",
             category: "acl-2026-award",
             subcategory: "Best Paper"
         },
@@ -493,12 +505,14 @@
         {
             filename: "acl-2026-award/CoSToM - Causal-oriented Steering for Intrinsic Theory-of-Mind Alignment in Large Language Models.pdf",
             title: "CoSToM: Causal-oriented Steering for Intrinsic Theory-of-Mind Alignment in Large Language Models",
+            title_zh: "CoSToM：面向因果导向的大语言模型内在心智理论对齐",
             category: "acl-2026-award",
             subcategory: "Best Theme"
         },
         {
             filename: "acl-2026-award/Mapping the Circumplex of Affect - Geometric Analysis of Emotion Representations via Hyperspherical Contrastive Learning.pdf",
             title: "Mapping the Circumplex of Affect: Geometric Analysis of Emotion Representations via Hyperspherical Contrastive Learning",
+            title_zh: "绘制情感环形图：基于超球面对比学习的情感表征几何分析",
             category: "acl-2026-award",
             subcategory: "Best Theme"
         },
@@ -509,24 +523,28 @@
         {
             filename: "acl-2026-award/HSCodeComp - A Realistic and Expert-level Agent Benchmark for Hierarchical Rule Application.pdf",
             title: "HSCodeComp: A Realistic and Expert-level Agent Benchmark for Hierarchical Rule Application",
+            title_zh: "HSCodeComp：面向层级规则应用的现实专家级智能体基准测试",
             category: "acl-2026-award",
             subcategory: "Best Resource"
         },
         {
             filename: "acl-2026-award/ImplicitMemBench - Measuring Unconscious Behavioral Adaptation in Large Language Models.pdf",
             title: "ImplicitMemBench: Measuring Unconscious Behavioral Adaptation in Large Language Models",
+            title_zh: "ImplicitMemBench：测量大语言模型的无意识行为适应能力",
             category: "acl-2026-award",
             subcategory: "Best Resource"
         },
         {
             filename: "acl-2026-award/Audio MultiChallenge - A Multi-Turn Evaluation of Spoken Dialogue Systems on Natural Human Interaction.pdf",
             title: "Audio MultiChallenge: A Multi-Turn Evaluation of Spoken Dialogue Systems on Natural Human Interaction",
+            title_zh: "Audio MultiChallenge：面向自然人机交互的口语对话系统多轮评估",
             category: "acl-2026-award",
             subcategory: "Best Resource"
         },
         {
             filename: "acl-2026-award/VeriTaS - The First Dynamic Benchmark for Multimodal Automated Fact-Checking.pdf",
             title: "VeriTaS: The First Dynamic Benchmark for Multimodal Automated Fact-Checking",
+            title_zh: "VeriTaS：首个多模态自动化事实验证的动态基准",
             category: "acl-2026-award",
             subcategory: "Best Resource"
         },
@@ -537,18 +555,21 @@
         {
             filename: "acl-2026-award/DIA-HARM - Dialectal Disparities in Harmful Content Detection Across 50 English Dialects.pdf",
             title: "DIA-HARM: Dialectal Disparities in Harmful Content Detection Across 50 English Dialects",
+            title_zh: "DIA-HARM：50种英语方言中有害内容检测的方言差异研究",
             category: "acl-2026-award",
             subcategory: "Best Social Impact"
         },
         {
             filename: "acl-2026-award/Your Students Don't Use LLMs Like You Wish They Did.pdf",
             title: "Your Students Don't Use LLMs Like You Wish They Did",
+            title_zh: "你的学生并未如你所愿地使用大语言模型",
             category: "acl-2026-award",
             subcategory: "Best Social Impact"
         },
         {
             filename: "acl-2026-award/Afri-MCQA - Multimodal Cultural Question Answering for African Languages.pdf",
             title: "Afri-MCQA: Multimodal Cultural Question Answering for African Languages",
+            title_zh: "Afri-MCQA：面向非洲语言的多模态文化问答",
             category: "acl-2026-award",
             subcategory: "Best Social Impact"
         },
@@ -559,102 +580,119 @@
         {
             filename: "acl-2026-award/MauBERT - Universal Phonetic Inductive Biases for Few-Shot Acoustic Units Discovery.pdf",
             title: "MauBERT: Universal Phonetic Inductive Biases for Few-Shot Acoustic Units Discovery",
+            title_zh: "MauBERT：面向小样本声学单元发现的通用语音归纳偏置",
             category: "acl-2026-award",
             subcategory: "Outstanding"
         },
         {
             filename: "acl-2026-award/Evolutionary Guided Decoding - Iterative Value Refinement for LLMs.pdf",
             title: "Evolutionary Guided Decoding: Iterative Value Refinement for LLMs",
+            title_zh: "进化引导解码：大语言模型的迭代价值精炼方法",
             category: "acl-2026-award",
             subcategory: "Outstanding"
         },
         {
             filename: "acl-2026-award/Beyond the Final Actor - Modeling the Dual Roles of Creator and Editor for Fine-Grained LLM-Generated Text Detection.pdf",
             title: "Beyond the Final Actor: Modeling the Dual Roles of Creator and Editor for Fine-Grained LLM-Generated Text Detection",
+            title_zh: "超越最终作者：建模创作者与编辑者双重角色实现细粒度LLM生成文本检测",
             category: "acl-2026-award",
             subcategory: "Outstanding"
         },
         {
             filename: "acl-2026-award/Lying with Truths - Open-Channel Multi-Agent Collusion for Belief Manipulation via Generative Montage.pdf",
             title: "Lying with Truths: Open-Channel Multi-Agent Collusion for Belief Manipulation via Generative Montage",
+            title_zh: "以真实行欺骗：基于生成式蒙太奇的开放信道多智能体合谋信念操纵",
             category: "acl-2026-award",
             subcategory: "Outstanding"
         },
         {
             filename: "acl-2026-award/Hierarchical Acoustic-Semantic Modeling - Modality Separation and Semantic Coherence for Full-Duplex SLMs.pdf",
             title: "Hierarchical Acoustic-Semantic Modeling: Modality Separation and Semantic Coherence for Full-Duplex SLMs",
+            title_zh: "层级声学-语义建模：面向全双工语音语言模型的模态分离与语义一致性",
             category: "acl-2026-award",
             subcategory: "Outstanding"
         },
         {
             filename: "acl-2026-award/Mind the (DH) Gap A Contrast in Risky Choices Between Reasoning and Conversational LLMs.pdf",
             title: "Mind the (DH) Gap! A Contrast in Risky Choices Between Reasoning and Conversational LLMs",
+            title_zh: "注意（DH）差距！推理型与对话型LLM在风险选择中的对比研究",
             category: "acl-2026-award",
             subcategory: "Outstanding"
         },
         {
             filename: "acl-2026-award/MediEval - A Unified Medical Benchmark for Patient-Contextual and Knowledge-Grounded Reasoning in LLMs.pdf",
             title: "MediEval: A Unified Medical Benchmark for Patient-Contextual and Knowledge-Grounded Reasoning in LLMs",
+            title_zh: "MediEval：面向患者情境与知识驱动的LLM医学推理统一基准",
             category: "acl-2026-award",
             subcategory: "Outstanding"
         },
         {
             filename: "acl-2026-award/Maximizing Local Entropy Where It Matters - Prefix-Aware Localized LLM Unlearning.pdf",
             title: "Maximizing Local Entropy Where It Matters: Prefix-Aware Localized LLM Unlearning",
+            title_zh: "在关键处最大化局部熵：前缀感知的局部化LLM遗忘方法",
             category: "acl-2026-award",
             subcategory: "Outstanding"
         },
         {
             filename: "acl-2026-award/GeoRA - Geometry-Aware Low-Rank Adaptation for RLVR.pdf",
             title: "GeoRA: Geometry-Aware Low-Rank Adaptation for RLVR",
+            title_zh: "GeoRA：面向RLVR的几何感知低秩适配方法",
             category: "acl-2026-award",
             subcategory: "Outstanding"
         },
         {
             filename: "acl-2026-award/Systematicity between Forms and Meanings across Languages Supports Efficient Communication.pdf",
             title: "Systematicity between Forms and Meanings across Languages Supports Efficient Communication",
+            title_zh: "跨语言形式与意义之间的系统性支持高效沟通",
             category: "acl-2026-award",
             subcategory: "Outstanding"
         },
         {
             filename: "acl-2026-award/Rethinking Entropy Interventions in RLVR - An Entropy Change Perspective.pdf",
             title: "Rethinking Entropy Interventions in RLVR: An Entropy Change Perspective",
+            title_zh: "重新审视RLVR中的熵干预：一个熵变化视角",
             category: "acl-2026-award",
             subcategory: "Outstanding"
         },
         {
             filename: "acl-2026-award/From Local to Global - Revisiting Structured Pruning Paradigms for Large Language Models.pdf",
             title: "From Local to Global: Revisiting Structured Pruning Paradigms for Large Language Models",
+            title_zh: "从局部到全局：重新审视大语言模型的结构化剪枝范式",
             category: "acl-2026-award",
             subcategory: "Outstanding"
         },
         {
             filename: "acl-2026-award/Massively Multilingual Joint Segmentation and Glossing.pdf",
             title: "Massively Multilingual Joint Segmentation and Glossing",
+            title_zh: "大规模多语言联合分词与注释",
             category: "acl-2026-award",
             subcategory: "Outstanding"
         },
         {
             filename: "acl-2026-award/CAR-bench - Evaluating the Consistency and Limit-Awareness of LLM Agents under Real-World Uncertainty.pdf",
             title: "CAR-bench: Evaluating the Consistency and Limit-Awareness of LLM Agents under Real-World Uncertainty",
+            title_zh: "CAR-bench：评估真实世界不确定性下LLM智能体的一致性与边界感知能力",
             category: "acl-2026-award",
             subcategory: "Outstanding"
         },
         {
             filename: "acl-2026-award/ViLL-E - Video LLM Embeddings for Retrieval.pdf",
             title: "ViLL-E: Video LLM Embeddings for Retrieval",
+            title_zh: "ViLL-E：面向检索任务的视频LLM嵌入表示",
             category: "acl-2026-award",
             subcategory: "Outstanding"
         },
         {
             filename: "acl-2026-award/CxMP - A Linguistic Minimal-Pair Benchmark for Evaluating Constructional Understanding in Language Models.pdf",
             title: "CxMP: A Linguistic Minimal-Pair Benchmark for Evaluating Constructional Understanding in Language Models",
+            title_zh: "CxMP：评估语言模型构式理解能力的语言学最小对基准",
             category: "acl-2026-award",
             subcategory: "Outstanding"
         },
         {
             filename: "acl-2026-award/CIG - Measuring Conversational Information Gain in Deliberative Dialogues with Semantic Memory Dynamics.pdf",
             title: "CIG: Measuring Conversational Information Gain in Deliberative Dialogues with Semantic Memory Dynamics",
+            title_zh: "CIG：基于语义记忆动态的协商对话中会话信息增益测量",
             category: "acl-2026-award",
             subcategory: "Outstanding"
         },
@@ -665,12 +703,14 @@
         {
             filename: "acl-2026-award/Evaluation of Multilingual Ability to Use Spatial Deictic Expressions in Vision-Language Models.pdf",
             title: "Evaluation of Multilingual Ability to Use Spatial Deictic Expressions in Vision-Language Models",
+            title_zh: "视觉语言模型中多语言空间指示表达使用能力评估",
             category: "acl-2026-award",
             subcategory: "SRW Best Paper"
         },
         {
             filename: "acl-2026-award/BanglaSocialBench - A Benchmark for Evaluating Sociopragmatic and Cultural Alignment of LLMs in Bangladeshi Social Interaction.pdf",
             title: "BanglaSocialBench: A Benchmark for Evaluating Sociopragmatic and Cultural Alignment of LLMs in Bangladeshi Social Interaction",
+            title_zh: "BanglaSocialBench：评估LLM在孟加拉社会互动中社会语用与文化对齐的基准",
             category: "acl-2026-award",
             subcategory: "SRW Best Paper"
         }
@@ -716,9 +756,13 @@
             pool = pool.filter(p => p.category === currentFilter);
         }
 
-        // 搜索过滤
+        // 搜索过滤（同时匹配英文和中文标题）
         if (!query) return pool;
-        return pool.filter(p => p.title.toLowerCase().includes(query));
+        return pool.filter(p => {
+            if (p.title.toLowerCase().includes(query)) return true;
+            if (p.title_zh && p.title_zh.includes(query)) return true;
+            return false;
+        });
     }
 
     // =============================================================
@@ -813,6 +857,7 @@
                 <div class="paper-card">
                     ${badgeHtml ? `<div class="paper-meta">${badgeHtml}</div>` : ""}
                     <div class="paper-title">${escapeHtml(title)}</div>
+                    ${p.title_zh ? `<div class="paper-title-zh">${escapeHtml(p.title_zh)}</div>` : ""}
                     <div class="paper-actions">
                         <button class="btn btn-preview" onclick='openPreview("${escapeAttr(pdfPath)}", "${escapeAttr(title)}")'>
                             👁 预览
