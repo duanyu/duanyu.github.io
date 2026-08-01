@@ -36,6 +36,9 @@
             display: flex;
             justify-content: center;
             padding: 32px 20px 80px;
+            /* 移动端：去掉点击时的灰色高亮块，禁止横向溢出 */
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
         }
 
         .container { width: 100%; max-width: var(--max-width); }
@@ -59,7 +62,9 @@
             font-size: 0.9rem;
             transition: color 0.2s;
         }
-        .back-link:hover { color: var(--accent); }
+        @media (hover: hover) {
+            .back-link:hover { color: var(--accent); }
+        }
 
         .site-title {
             font-size: 1.5rem;
@@ -142,9 +147,11 @@
             font-family: inherit;
             white-space: nowrap;
         }
-        .filter-tab:hover {
-            border-color: var(--accent);
-            color: var(--accent);
+        @media (hover: hover) {
+            .filter-tab:hover {
+                border-color: var(--accent);
+                color: var(--accent);
+            }
         }
         .filter-tab.active {
             background: var(--accent);
@@ -200,9 +207,12 @@
             box-shadow: var(--card-shadow);
             transition: box-shadow 0.25s, transform 0.25s;
         }
-        .paper-card:hover {
-            box-shadow: var(--card-hover);
-            transform: translateY(-2px);
+        /* 悬停效果只在真正支持悬停的设备启用，避免触屏点击后样式粘滞 */
+        @media (hover: hover) {
+            .paper-card:hover {
+                box-shadow: var(--card-hover);
+                transform: translateY(-2px);
+            }
         }
 
         .paper-card .paper-title {
@@ -210,6 +220,7 @@
             font-weight: 600;
             color: var(--accent);
             margin-bottom: 4px;
+            overflow-wrap: anywhere;   /* 英文长标题不撑破卡片 */
         }
         .paper-card .paper-title-zh {
             font-size: 0.9rem;
@@ -242,22 +253,13 @@
             background: var(--accent);
             color: #fff;
         }
-        .btn-preview:hover { opacity: 0.85; }
         .btn-download {
             background: #f3f4f6;
             color: var(--text);
         }
-        .btn-download:hover { background: #e5e7eb; }
-
-        /* 下载计数 */
-        .paper-card .paper-dl-count {
-            margin-top: 12px;
-            font-size: 0.82rem;
-            color: var(--text-light);
-        }
-        .paper-card .paper-dl-count strong {
-            color: var(--accent);
-            font-weight: 600;
+        @media (hover: hover) {
+            .btn-preview:hover { opacity: 0.85; }
+            .btn-download:hover { background: #e5e7eb; }
         }
 
         /* ============================================================
@@ -301,7 +303,27 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            max-width: 70%;
+            flex: 1;
+            min-width: 0;
+        }
+        /* 弹窗右侧操作区：新标签页打开 + 关闭 */
+        .preview-header .preview-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-shrink: 0;
+            margin-left: 12px;
+        }
+        .preview-open {
+            font-size: 0.82rem;
+            color: var(--text-light);
+            text-decoration: none;
+            white-space: nowrap;
+            transition: color 0.2s;
+        }
+        @media (hover: hover) {
+            .preview-open:hover { color: var(--accent); }
+            .preview-close:hover { color: var(--text); }
         }
         .preview-close {
             background: none;
@@ -312,7 +334,6 @@
             padding: 0 8px;
             line-height: 1;
         }
-        .preview-close:hover { color: var(--text); }
         .preview-body {
             flex: 1;
             min-height: 0;
@@ -348,14 +369,62 @@
         .footer a { color: #bbb; text-decoration: none; }
         .footer a:hover { color: var(--accent); }
 
-        /* ---------- 响应式 ---------- */
+        /* ---------- 响应式（移动端阅读体验优化） ---------- */
         @media (max-width: 600px) {
-            body { padding: 24px 14px 60px; }
-            .top-bar { flex-direction: column; align-items: center; }
-            .back-link { position: static; margin-bottom: 8px; }
-            .site-title { font-size: 1.25rem; }
-            .paper-card { padding: 18px; }
-            .preview-modal { height: 95vh; max-width: 100%; }
+            body { padding: 20px 14px 56px; }
+
+            .top-bar {
+                flex-direction: column;
+                align-items: stretch;
+                margin-bottom: 26px;
+            }
+            .back-link { position: static; margin-bottom: 10px; }
+            .site-title { font-size: 1.2rem; line-height: 1.45; }
+
+            /* 搜索框：16px 字号可避免 iOS 聚焦时页面自动放大 */
+            .search-section { margin-bottom: 22px; }
+            .search-wrapper { max-width: 100%; }
+            .search-wrapper input { font-size: 16px; padding: 12px 42px 12px 14px; }
+
+            /* 筛选标签：等宽平铺，触摸目标更大 */
+            .filter-tabs { gap: 8px; margin-bottom: 18px; }
+            .filter-tab {
+                flex: 1;
+                min-width: 0;
+                padding: 10px 8px;
+                text-align: center;
+                font-size: 0.85rem;
+            }
+
+            .stats-bar { margin-bottom: 14px; font-size: 0.85rem; }
+
+            .paper-list { gap: 12px; }
+            .paper-card { padding: 16px; }
+            .paper-card .paper-title { font-size: 1.02rem; line-height: 1.5; }
+            .paper-card .paper-title-zh { font-size: 0.86rem; margin-bottom: 12px; }
+
+            /* 操作按钮：各占一半宽度，保证 44px 可点高度 */
+            .paper-card .paper-actions { gap: 8px; }
+            .paper-card .btn {
+                flex: 1;
+                justify-content: center;
+                min-height: 44px;
+                font-size: 0.9rem;
+                padding: 8px 10px;
+            }
+
+            /* 预览弹窗：移动端已改为新标签页阅读，此处仅作兜底全屏样式 */
+            .preview-overlay { padding: 0; }
+            .preview-modal {
+                max-width: 100%;
+                height: 100vh;
+                height: 100dvh;
+                border-radius: 0;
+            }
+            .preview-header { padding: 12px 14px; }
+            .preview-header .preview-title { font-size: 0.9rem; }
+
+            .footer { margin-top: 40px; }
         }
     </style>
 </head>
@@ -437,7 +506,10 @@
     <div class="preview-modal" onclick="event.stopPropagation()">
         <div class="preview-header">
             <span class="preview-title" id="previewTitle"></span>
-            <button class="preview-close" onclick="closePreview()">&times;</button>
+            <div class="preview-actions">
+                <a class="preview-open" id="previewOpenLink" href="" target="_blank" rel="noopener">↗ 新标签页打开</a>
+                <button class="preview-close" onclick="closePreview()">&times;</button>
+            </div>
         </div>
         <div class="preview-body" id="previewBody">
             <iframe id="previewFrame" src="" allowfullscreen></iframe>
@@ -722,22 +794,17 @@
     let currentFilter = "all";  // "all" | "acl-2026-award"
 
     // =============================================================
-    //  下载计数（基于 localStorage 持久化）
+    //  阅读方式判定
+    //  移动端（iOS / Android / iPad）的 iframe 无法正常渲染与滚动 PDF，
+    //  改为直接用系统自带的 PDF 阅读器在新标签页打开，体验更好。
     // =============================================================
-    function getDownloadCount(filename) {
-        const key = "dl_" + filename;
-        return parseInt(localStorage.getItem(key) || "0", 10);
-    }
-
-    function incrementDownload(filename) {
-        const key = "dl_" + filename;
-        const count = getDownloadCount(filename) + 1;
-        localStorage.setItem(key, count);
-        return count;
-    }
-
-    function getTotalDownloads(pool) {
-        return (pool || papers).reduce((sum, p) => sum + getDownloadCount(p.filename), 0);
+    function useNativeViewer() {
+        const ua = navigator.userAgent;
+        const isIOS = /iPhone|iPad|iPod/i.test(ua)
+            || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);  // iPadOS 伪装成桌面 UA
+        const isAndroid = /Android/i.test(ua);
+        const isNarrow = window.matchMedia("(max-width: 700px)").matches;
+        return isIOS || isAndroid || isNarrow;
     }
 
     // =============================================================
@@ -825,13 +892,12 @@
 
         // 当前筛选下的论文池
         const pool = currentFilter === "all" ? papers : papers.filter(p => p.category === currentFilter);
-        const totalDownloads = getTotalDownloads(pool);
 
         // 更新统计文本
         if (currentFilter === "acl-2026-award") {
-            document.getElementById("statsText").textContent = "ACL 2026 Award · 共 " + pool.length + " 篇论文 · 总计 " + totalDownloads + " 次下载";
+            document.getElementById("statsText").textContent = "ACL 2026 Award · 共 " + pool.length + " 篇论文";
         } else {
-            document.getElementById("statsText").textContent = "共 " + pool.length + " 篇论文 · 总计 " + totalDownloads + " 次下载";
+            document.getElementById("statsText").textContent = "共 " + pool.length + " 篇论文";
         }
 
         if (filtered.length === 0) {
@@ -841,10 +907,11 @@
         }
 
         emptyEl.style.display = "none";
+        const nativeViewer = useNativeViewer();
+
         listEl.innerHTML = filtered.map(p => {
             const title = p.title;
             const pdfPath = "pdf/" + encodeURIComponent(p.filename);
-            const dlCount = getDownloadCount(p.filename);
 
             // 子分类徽章
             let badgeHtml = "";
@@ -853,32 +920,38 @@
                 badgeHtml = `<span class="paper-award-badge ${badgeClass}">${escapeHtml(p.subcategory)}</span>`;
             }
 
+            // 阅读按钮：移动端直接新标签页打开，桌面端用弹窗内嵌预览
+            const readBtnHtml = nativeViewer
+                ? `<a class="btn btn-preview" href="${escapeAttr(pdfPath)}" target="_blank" rel="noopener">
+                       📖 阅读
+                   </a>`
+                : `<button class="btn btn-preview" onclick='openPreview("${escapeAttr(pdfPath)}", "${escapeAttr(title)}")'>
+                       👁 预览
+                   </button>`;
+
             return `
                 <div class="paper-card">
                     ${badgeHtml ? `<div class="paper-meta">${badgeHtml}</div>` : ""}
                     <div class="paper-title">${escapeHtml(title)}</div>
                     ${p.title_zh ? `<div class="paper-title-zh">${escapeHtml(p.title_zh)}</div>` : ""}
                     <div class="paper-actions">
-                        <button class="btn btn-preview" onclick='openPreview("${escapeAttr(pdfPath)}", "${escapeAttr(title)}")'>
-                            👁 预览
-                        </button>
-                        <a class="btn btn-download" href="${escapeAttr(pdfPath)}" download
-                           onclick="handleDownload('${escapeAttr(p.filename)}')">
+                        ${readBtnHtml}
+                        <a class="btn btn-download" href="${escapeAttr(pdfPath)}" download>
                             ⬇ 下载 PDF
                         </a>
                     </div>
-                    <div class="paper-dl-count">📥 已下载 <strong>${dlCount}</strong> 次</div>
                 </div>
             `;
         }).join("");
     }
 
     // =============================================================
-    //  PDF 预览
+    //  PDF 预览（仅桌面端）
     // =============================================================
     function openPreview(pdfPath, title) {
         document.getElementById("previewTitle").textContent = title;
         document.getElementById("previewFrame").src = pdfPath;
+        document.getElementById("previewOpenLink").href = pdfPath;
         document.getElementById("previewOverlay").classList.add("show");
         document.body.style.overflow = "hidden";
     }
@@ -910,14 +983,6 @@
     }
 
     // =============================================================
-    //  下载处理：记录下载次数后刷新 UI
-    // =============================================================
-    function handleDownload(filename) {
-        incrementDownload(filename);
-        renderPapers();
-    }
-
-    // =============================================================
     //  初始化：页面加载完毕后渲染
     // =============================================================
     document.addEventListener("DOMContentLoaded", function() {
@@ -934,6 +999,15 @@
 
         // 渲染论文列表
         renderPapers();
+    });
+
+    // =============================================================
+    //  窗口宽度变化（如横竖屏切换）时重新判定阅读方式
+    // =============================================================
+    let resizeTimer = null;
+    window.addEventListener("resize", function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(renderPapers, 200);
     });
 </script>
 
