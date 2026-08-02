@@ -462,6 +462,7 @@
     <div class="filter-tabs" id="filterTabs">
         <button class="filter-tab active" data-filter="all" onclick="setFilter('all')">📚 全部论文</button>
         <button class="filter-tab" data-filter="acl-2026-award" onclick="setFilter('acl-2026-award')">🏆 ACL 2026 Award</button>
+        <button class="filter-tab" data-filter="chinese-open-llm" onclick="setFilter('chinese-open-llm')">🇨🇳 中国开源大模型</button>
     </div>
 
     <!-- ============================================================ -->
@@ -530,6 +531,16 @@
     //    - title_zh:    论文标题（中文翻译）
     // =============================================================
     const papers = [
+        // =============================================================
+        //  中国开源大模型
+        // =============================================================
+        {
+            filename: "chinese-open-llm/Kimi K3 - Open Frontier Intelligence.pdf",
+            title: "Kimi K3: Open Frontier Intelligence",
+            title_zh: "Kimi K3：开放前沿智能",
+            category: "chinese-open-llm"
+        },
+
         // =============================================================
         //  通用论文
         // =============================================================
@@ -791,7 +802,7 @@
     // =============================================================
     //  当前筛选状态
     // =============================================================
-    let currentFilter = "all";  // "all" | "acl-2026-award"
+    let currentFilter = "all";  // "all" | "acl-2026-award" | "chinese-open-llm"
 
     // =============================================================
     //  阅读方式判定
@@ -876,6 +887,9 @@
         if (currentFilter === "acl-2026-award") {
             document.title = "ACL 2026 Award 论文（中英对照翻译版）";
             h1.textContent = "🏆 ACL 2026 Award 论文";
+        } else if (currentFilter === "chinese-open-llm") {
+            document.title = "中国开源大模型 论文（中英对照翻译版）";
+            h1.textContent = "🇨🇳 中国开源大模型 论文";
         } else {
             document.title = "论文分享（中英对照翻译版）";
             h1.textContent = "📄 论文分享（中英对照翻译版）";
@@ -896,6 +910,8 @@
         // 更新统计文本
         if (currentFilter === "acl-2026-award") {
             document.getElementById("statsText").textContent = "ACL 2026 Award · 共 " + pool.length + " 篇论文";
+        } else if (currentFilter === "chinese-open-llm") {
+            document.getElementById("statsText").textContent = "中国开源大模型 · 共 " + pool.length + " 篇论文";
         } else {
             document.getElementById("statsText").textContent = "共 " + pool.length + " 篇论文";
         }
